@@ -1,0 +1,12 @@
+{
+  "name": "plant-diagnosis-platform",
+  "private": true,
+  "workspaces": [
+    "4_backend/*"
+  ],
+  "scripts": {
+    "start": "node -e \"console.log('Use ./scripts/start-all.sh to start services')\"",
+    "test": "echo \"No root tests configured\""
+  }
+}
+
