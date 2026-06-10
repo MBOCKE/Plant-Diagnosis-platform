@@ -16,10 +16,11 @@ print("🍌 DOWNLOADING BANANA/PLANTAIN DATASETS")
 print("=" * 70)
 
 BANANA_CLASS_MAP = {
-    'black_sigatoka': ['black_sigatoka', 'Black_Sigatoka', 'sigatoka', 'Sigatoka'],
-    'bbtv': ['bbtv', 'BBTV', 'bunchy_top', 'Bunchy_Top'],
-    'fusarium_wilt': ['fusarium_wilt', 'Fusarium_Wilt', 'panama', 'Panama'],
+    'black_sigatoka': ['sigatoka', 'Sigatoka', 'black_sigatoka', 'Black_Sigatoka', 'black sigatoka'],
+    'bbtv': ['bbtv', 'BBTV', 'bunchy_top', 'Bunchy_Top', 'bunchy'],
+    'fusarium_wilt': ['fusarium', 'Fusarium', 'panama', 'Panama', 'panama disease'],
     'healthy': ['healthy', 'Healthy', 'health'],
+    'other_disease': ['cordana', 'Cordana', 'pestalotiopsis', 'Pestalotiopsis'],
 }
 
 def find_and_copy(source_path, dest_name):
@@ -45,7 +46,7 @@ def find_and_copy(source_path, dest_name):
         if detected:
             dest_dir = dest_base / detected
             dest_dir.mkdir(parents=True, exist_ok=True)
-            dest_file = dest_dir / f"{dest_name}_{os.path.basename(img_path)}"
+            dest_file = dest_dir / os.path.basename(img_path)
             if not dest_file.exists():
                 try:
                     shutil.copy2(img_path, dest_file)
@@ -53,25 +54,26 @@ def find_and_copy(source_path, dest_name):
                 except:
                     pass
     
-    print(f"   Copied: {copied}")
+    print(f"   Copied: {copied} images")
     return copied
 
-# Try banana datasets
+
 banana_sources = [
-    ('Banana Leaf Diseases', 'shuvokumardas/banana-leaf-diseases', '01_kaggle_banana_leaf'),
-    ('Banana Disease Detection', 'hafizhanif/banana-disease-detection', '02_kaggle_banana_disease'),
-    ('Banana Leaf Spot', 'iftekharrashid/banana-leaf-disease', '03_kaggle_banana_spot'),
+    ('BananaLSD - Leaf Spot', 'shifatearman/bananalsd', '01_bananalsd'),
+    ('Banana Leaf Disease v4 (Panama + Sigatoka)', 'rayhanarlistya/banana-leaf-disease-dataset-v4', '02_banana_v4'),
 ]
 
 total = 0
 for name, kaggle_path, dest in banana_sources:
     print(f"\n📥 {name}")
+    print(f"   Path: {kaggle_path}")
     try:
         path = kagglehub.dataset_download(kaggle_path)
+        print(f"   Downloaded!")
         count = find_and_copy(path, dest)
         total += count
     except Exception as e:
-        print(f"   Skipped: {str(e)[:80]}")
+        print(f"   ❌ Error: {str(e)[:120]}")
 
 print(f"\n{'=' * 70}")
 print(f"📊 Total banana images: {total}")

@@ -1,0 +1,78 @@
+{
+  "tomato": {
+    "early_blight": {
+      "training": 857,
+      "validation_lab": 500,
+      "validation_field": 0,
+      "test_lab": 500,
+      "field_test": 4854,
+      "total": 6711
+    },
+    "late_blight": {
+      "training": 480,
+      "validation_lab": 954,
+      "validation_field": 0,
+      "test_lab": 955,
+      "field_test": 2714,
+      "total": 5103
+    },
+    "tylcv": {
+      "training": 184,
+      "validation_lab": 2678,
+      "validation_field": 0,
+      "test_lab": 2679,
+      "field_test": 1038,
+      "total": 6579
+    },
+    "bacterial_spot": {
+      "training": 885,
+      "validation_lab": 1063,
+      "validation_field": 0,
+      "test_lab": 1064,
+      "field_test": 5011,
+      "total": 8023
+    },
+    "healthy": {
+      "training": 340,
+      "validation_lab": 795,
+      "validation_field": 0,
+      "test_lab": 796,
+      "field_test": 1924,
+      "total": 3855
+    }
+  },
+  "banana_plantain": {
+    "black_sigatoka": {
+      "training": 557,
+      "validation_lab": 0,
+      "validation_field": 0,
+      "test_lab": 0,
+      "field_test": 3155,
+      "total": 3712
+    },
+    "bbtv": {
+      "training": 398,
+      "validation_lab": 0,
+      "validation_field": 0,
+      "test_lab": 0,
+      "field_test": 2249,
+      "total": 2647
+    },
+    "fusarium_wilt": {
+      "training": 198,
+      "validation_lab": 0,
+      "validation_field": 0,
+      "test_lab": 0,
+      "field_test": 1117,
+      "total": 1315
+    },
+    "healthy": {
+      "training": 230,
+      "validation_lab": 0,
+      "validation_field": 0,
+      "test_lab": 0,
+      "field_test": 1300,
+      "total": 1530
+    }
+  }
+}
