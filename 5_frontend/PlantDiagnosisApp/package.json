@@ -1,4 +1,33 @@
 {
-  "name": "PlantDiagnosisApp",
-  "private": true
+  "name": "plant-diagnosis-app",
+  "private": true,
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^7.17.2",
+    "@react-navigation/native": "^7.3.0",
+    "@react-navigation/native-stack": "^7.17.2",
+    "axios": "^1.17.0",
+    "expo-camera": "~56.0.8",
+    "expo-file-system": "~56.0.8",
+    "expo-image-manipulator": "~56.0.18",
+    "expo-image-picker": "~56.0.17",
+    "expo-location": "~56.0.17",
+    "expo-network": "~56.0.5",
+    "expo-router": "^56.2.10",
+    "expo-secure-store": "~56.0.4",
+    "expo-status-bar": "^56.0.4",
+    "nativewind": "^4.2.5",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native-safe-area-context": "^5.8.0",
+    "react-native-screens": "^4.25.2",
+    "react-native-web": "^0.21.2",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19",
+    "typescript": "~6.0.3"
+  }
 }
