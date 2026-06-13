@@ -1,0 +1,12 @@
+// API Gateway Route Configuration
+// Proxies requests to appropriate microservices
+
+const express = require('express');
+const router = express.Router();
+
+// Health check
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+module.exports = router;

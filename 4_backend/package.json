@@ -1,0 +1,18 @@
+{
+  "name": "plant-diagnosis-backend",
+  "private": true,
+  "scripts": {
+    "dev:auth": "cd auth-service && npm run dev",
+    "dev:treatment": "cd treatment-service && npm run dev",
+    "dev:case": "cd case-service && npm run dev",
+    "dev:inference": "cd inference-service && npm run dev",
+    "dev:gateway": "cd api-gateway && npm run dev",
+    "install:auth": "cd auth-service && npm install",
+    "install:treatment": "cd treatment-service && npm install",
+    "install:case": "cd case-service && npm install",
+    "install:inference": "cd inference-service && npm install",
+    "install:gateway": "cd api-gateway && npm install",
+    "install:all": "npm run install:auth && npm run install:treatment && npm run install:case && npm run install:inference && npm run install:gateway",
+    "start:all": "bash scripts/start-all.sh"
+  }
+}
