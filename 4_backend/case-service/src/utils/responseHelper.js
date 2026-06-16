@@ -1,9 +1,19 @@
-function success(res, data, message = 'Success') {
-  return res.json({ status: 'success', message, data });
-}
+const success = (res, message = 'Success', data = null, statusCode = 200) => {
+  return res.status(statusCode).json({
+    success: true,
+    message,
+    data,
+    timestamp: new Date().toISOString(),
+  });
+};
 
-function error(res, statusCode = 500, message = 'Internal Server Error') {
-  return res.status(statusCode).json({ status: 'error', message });
-}
+const error = (res, message = 'Server Error', errors = null, statusCode = 500) => {
+  return res.status(statusCode).json({
+    success: false,
+    message,
+    errors,
+    timestamp: new Date().toISOString(),
+  });
+};
 
 module.exports = { success, error };

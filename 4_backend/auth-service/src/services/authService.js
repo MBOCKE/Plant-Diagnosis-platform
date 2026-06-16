@@ -10,14 +10,21 @@ class AuthService {
     );
   }
 
-  async register({ email, password, name, phone, preferredLanguage }) {
+  async register({ email, password, name, phone, preferredLanguage, location }) {
     const exists = await User.findOne({ email });
     if (exists) {
       const err = new Error('User with this email already exists');
       err.statusCode = 409;
       throw err;
     }
-    const user = await User.create({ email, password, name, phone, preferredLanguage });
+    const user = await User.create({
+      email,
+      password,
+      name,
+      phone,
+      preferredLanguage,
+      location: location || undefined,
+    });
     const token = this.generateToken(user);
     return { user, token };
   }

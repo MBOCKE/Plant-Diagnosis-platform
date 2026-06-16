@@ -21,9 +21,28 @@ export const authAPI = {
     await new Promise(r => setTimeout(r, 500));
     return { user: { id: '1', email, name: 'Jean', preferredLanguage: 'en' as const }, token: 'demo_token' };
   },
-  register: async (data: { email: string; password: string; name: string }) => {
+
+  register: async (data: {
+    email: string;
+    password: string;
+    name: string;
+    phone?: string;
+    preferredLanguage?: 'en' | 'fr';
+    location?: any;
+  }) => {
+    // TODO: Replace with real API call
     await new Promise(r => setTimeout(r, 500));
-    return { user: { id: '1', email: data.email, name: data.name, preferredLanguage: 'en' as const }, token: 'demo_token' };
+    return {
+      user: {
+        id: '1',
+        email: data.email,
+        name: data.name,
+        phone: data.phone,
+        preferredLanguage: data.preferredLanguage || 'en' as const,
+        location: data.location || null,
+      },
+      token: 'demo_token',
+    };
   },
 };
 

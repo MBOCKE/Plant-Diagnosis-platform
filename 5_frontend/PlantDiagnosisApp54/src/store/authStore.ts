@@ -3,12 +3,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../services/api';
 import { User } from '../types';
 
+interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  preferredLanguage?: 'en' | 'fr';
+  location?: {
+    type: 'Point';
+    coordinates: [number, number];
+    country: string;
+    region: string;
+    town: string;
+  };
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; password: string; name: string }) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }

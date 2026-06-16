@@ -23,11 +23,29 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String, trim: true },
     preferredLanguage: { type: String, enum: ['en', 'fr'], default: 'fr' },
-    location: { type: String, trim: true },
+    location: {
+      // GPS coordinates (for maps/distance queries)
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        default: [0, 0],
+      },
+      // Human-readable address (auto-detected from GPS)
+      country: { type: String, default: '' },
+      region: { type: String, default: '' },
+      town: { type: String, default: '' },
+    },
     role: { type: String, enum: ['farmer', 'admin'], default: 'farmer' },
   },
   { timestamps: true }
 );
+
+// Index for geospatial queries
+userSchema.index({ location: '2dsphere' });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
