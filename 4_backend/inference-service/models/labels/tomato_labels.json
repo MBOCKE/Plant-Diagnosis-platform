@@ -1,9 +1,1 @@
-{
-  "classes": [
-    "Bacterial Spot",
-    "Early Blight",
-    "Late Blight",
-    "TYLCV",
-    "Healthy"
-  ]
-}
+{"0": "bacterial_spot", "1": "early_blight", "2": "healthy", "3": "late_blight", "4": "tylcv"}

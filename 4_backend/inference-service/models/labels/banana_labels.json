@@ -1,8 +1,1 @@
-{
-  "classes": [
-    "Banana Plantain Healthy",
-    "BBTV",
-    "Black Sigatoka",
-    "Fusarium Wilt"
-  ]
-}
+{"0": "bbtv", "1": "black_sigatoka", "2": "fusarium_wilt", "3": "healthy"}

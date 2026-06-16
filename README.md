@@ -120,7 +120,18 @@ sorry but the actual notebooks are empty because everything was done on collab a
 | Database | MongoDB per service | Document model fits case data |
 | Frontend | React Native + Expo | Cross-platform, fast development |
 
+
+I'll create a command to generate all docs at once. But first:
+
 ---
+
+**Export the Insomnia collection now:**
+
+1. Click `⏷` on your collection → **Export** → **Insomnia v4 (JSON)**
+2. Save to `6_docs/insomnia-collection.yaml`
+
+Then create the remaining files in `6_docs/` and commit everything!
+
 
 ## 🚀 Quick Start
 

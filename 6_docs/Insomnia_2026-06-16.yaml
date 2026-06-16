@@ -1,0 +1,837 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Plant Diagnosis API
+meta:
+  id: wrk_e4a2acd903644d95b9c87b9d492fc98e
+  created: 1781549772899
+  modified: 1781549772899
+  description: ""
+collection:
+  - url: http://localhost:3004/api/auth/register
+    name: Auth - Register
+    meta:
+      id: req_1d014b9f9caf449a9d037a294c999c6a
+      created: 1781549788498
+      modified: 1781552722854
+      isPrivate: false
+      description: ""
+      sortKey: -1781549788498
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "farmer3@test.com",
+          "password": "password123",
+          "name": "Pierre",
+          "phone": "+237600000000",
+          "preferredLanguage": "fr",
+          "location": {
+            "type": "Point",
+            "coordinates": [10.4833, 5.4667],
+            "country": "Cameroon",
+            "region": "West",
+            "town": "Foumbot"
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3004/api/auth/register
+    name: Auth - Login
+    meta:
+      id: req_d9dd895fe1664cbcb13e45c2c7bc1f36
+      created: 1781550458056
+      modified: 1781617770506
+      isPrivate: false
+      description: ""
+      sortKey: -1781550458056
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "farmer@test.com",
+          "password": "password123"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3004/api/auth/profile
+    name: Auth - Profile
+    meta:
+      id: req_3104346e2b554d5a8943c0ba842e8210
+      created: 1781550643066
+      modified: 1781552766392
+      isPrivate: false
+      description: ""
+      sortKey: -1781550643066
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    authentication:
+      type: bearer
+      token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA1NjVkYjgwZDc0OGNhNjUyNGJmZiIsImVtYWlsIjoiZmFybWVyM0B0ZXN0LmNvbSIsInJvbGUiOiJmYXJtZXIiLCJpYXQiOjE3ODE1NTI3MzQsImV4cCI6MTc4MTYzOTEzNH0.iV3C8YUDlxrJqoru8wAog3ZNLlwo20-_zF_D6k54AGM
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: " http://localhost:3002/api/treatment/tomato/Early%20Blight"
+    name: Early Blight
+    meta:
+      id: req_b5b3aed9fc314de185363492eecaf4f4
+      created: 1781554525524
+      modified: 1781554588095
+      isPrivate: false
+      description: ""
+      sortKey: -1781554525524
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/tomato/Late%20Blight
+    name: Late Blight
+    meta:
+      id: req_14c47f9935a54c39970f85b7531f8085
+      created: 1781554669765
+      modified: 1781554687066
+      isPrivate: false
+      description: ""
+      sortKey: -1781554669765
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/tomato/TYLCV
+    name: TYLCV
+    meta:
+      id: req_cf2ed3216cd245078ee7bfc623f15ec8
+      created: 1781554809829
+      modified: 1781554832801
+      isPrivate: false
+      description: ""
+      sortKey: -1781554809829
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/tomato/Bacterial%20Spot
+    name: Bacterial Spot
+    meta:
+      id: req_3c97c161ed074e419832e2fc3e5b870e
+      created: 1781554967425
+      modified: 1781554988014
+      isPrivate: false
+      description: ""
+      sortKey: -1781554967425
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/tomato/Healthy
+    name: Healthy
+    meta:
+      id: req_abbe0ccd469840a8ba79e0517c2f1d14
+      created: 1781555117434
+      modified: 1781555278093
+      isPrivate: false
+      description: ""
+      sortKey: -1781555117434
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment?cropType=tomato
+    name: All Tomato
+    meta:
+      id: req_21d021b80b2549d998f555007fa82c7d
+      created: 1781555336018
+      modified: 1781555356027
+      isPrivate: false
+      description: ""
+      sortKey: -1781555336018
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/banana_plantain/Black%20Sigatoka
+    name: Black Sigatoka
+    meta:
+      id: req_1f21e9a4225143b9871a42b80a03693c
+      created: 1781555423170
+      modified: 1781555440620
+      isPrivate: false
+      description: ""
+      sortKey: -1781555423170
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/banana_plantain/BBTV
+    name: BBTV
+    meta:
+      id: req_50117ec5be994e12962bf9386de54e8e
+      created: 1781555529904
+      modified: 1781555552803
+      isPrivate: false
+      description: ""
+      sortKey: -1781555529904
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/banana_plantain/Fusarium%20Wilt
+    name: Fusarium Wilt
+    meta:
+      id: req_a38709fcffc8465ca7f3e33106d10458
+      created: 1781555688964
+      modified: 1781555735739
+      isPrivate: false
+      description: ""
+      sortKey: -1781555688964
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/banana_plantain/Healthy
+    name: Healthy
+    meta:
+      id: req_d8a699235bc54f6bbe63c4db5442ebe6
+      created: 1781555909803
+      modified: 1781555931604
+      isPrivate: false
+      description: ""
+      sortKey: -1781555909803
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment?cropType=banana_plantain
+    name: All Banana
+    meta:
+      id: req_7422dab355314471a961424ac8ebd942
+      created: 1781555995733
+      modified: 1781556017722
+      isPrivate: false
+      description: ""
+      sortKey: -1781555995733
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/tomato/Early%20Blight
+    name: English version
+    meta:
+      id: req_81cd9235ccc44ee89ba7e63ecaeade77
+      created: 1781557930136
+      modified: 1781557964393
+      isPrivate: false
+      description: ""
+      sortKey: -1781557930136
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3002/api/treatment/tomato/Early%20Blight?lang=fr
+    name: French version
+    meta:
+      id: req_5641d3fa7dd24a489af3149f305dddb5
+      created: 1781557978393
+      modified: 1781558037628
+      isPrivate: false
+      description: ""
+      sortKey: -1781557978393
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.6.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - name: case service
+    meta:
+      id: fld_2c10d545c69549938af895f0470681d3
+      created: 1781570896151
+      modified: 1781570896151
+      sortKey: -1781570896263
+      description: ""
+    children:
+      - url: http://localhost:3004/api/auth/login
+        name: just for token
+        meta:
+          id: req_f5571db9c0e64f23ab4681a3722fceb2
+          created: 1781571005434
+          modified: 1781572148866
+          isPrivate: false
+          description: ""
+          sortKey: -1781571005434
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{ "email": "farmer@test.com", "password": "password123" }'
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA0ZDEyNzZkMDI2MjVmZmUyMzFjYiIsImVtYWlsIjoiZmFybWVyQHRlc3QuY29tIiwicm9sZSI6ImZhcm1lciIsImlhdCI6MTc4MTU3MTEzMCwiZXhwIjoxNzgxNjU3NTMwfQ.kmFhILn1I28TtdMMxXNamz6WdpNeh4UarRnQul0fYgw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3003/api/cases
+        name: Case - Create
+        meta:
+          id: req_dedbda2aa87040f9ab049c6c5244e162
+          created: 1781571183829
+          modified: 1781571339309
+          isPrivate: false
+          description: ""
+          sortKey: -1781571183829
+        method: POST
+        body:
+          mimeType: application/json
+          text: >-
+            {
+              "cropType": "tomato",
+              "imageUri": "file:///photos/tomato_leaf_001.jpg",
+              "symptomsDescription": "Brown spots with yellow halos on older leaves",
+              "location": {
+                "type": "Point",
+                "coordinates": [10.4833, 5.4667]
+              },
+              "status": "diagnosed",
+              "diagnosis": {
+                "primaryDiagnosis": {
+                  "disease": "Early Blight",
+                  "scientificName": "Alternaria solani",
+                  "confidence": 94
+                },
+                "alternativeDiagnoses": [
+                  { "disease": "Late Blight", "confidence": 23 },
+                  { "disease": "Bacterial Spot", "confidence": 12 }
+                ],
+                "modelUsed": "tomato-mobilenetv2-v1",
+                "inferenceTimeMs": 1247
+              },
+              "treatment": {
+                "urgency": "treat_soon",
+                "urgencyLabel": "Treat Soon",
+                "cultural": ["Remove infected leaves", "Improve air circulation"],
+                "biological": ["Apply neem oil spray"],
+                "chemical": ["Copper hydroxide 2g/L every 7 days"],
+                "precautions": ["Wear gloves", "7-day pre-harvest interval"]
+              }
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA0ZDEyNzZkMDI2MjVmZmUyMzFjYiIsImVtYWlsIjoiZmFybWVyQHRlc3QuY29tIiwicm9sZSI6ImZhcm1lciIsImlhdCI6MTc4MTU3MTEzMCwiZXhwIjoxNzgxNjU3NTMwfQ.kmFhILn1I28TtdMMxXNamz6WdpNeh4UarRnQul0fYgw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3003/api/cases
+        name: Case - Get All
+        meta:
+          id: req_db40e063c91d48e7889da27518c3d149
+          created: 1781571373116
+          modified: 1781571474999
+          isPrivate: false
+          description: ""
+          sortKey: -1781571373116
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA0ZDEyNzZkMDI2MjVmZmUyMzFjYiIsImVtYWlsIjoiZmFybWVyQHRlc3QuY29tIiwicm9sZSI6ImZhcm1lciIsImlhdCI6MTc4MTU3MTEzMCwiZXhwIjoxNzgxNjU3NTMwfQ.kmFhILn1I28TtdMMxXNamz6WdpNeh4UarRnQul0fYgw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3003/api/cases/6a309f0fc6845a017afdb9d4
+        name: Case - Get One
+        meta:
+          id: req_7531b9ae442c4cc9a941271c1ef696ee
+          created: 1781571517596
+          modified: 1781571891956
+          isPrivate: false
+          description: ""
+          sortKey: -1781571517596
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA0ZDEyNzZkMDI2MjVmZmUyMzFjYiIsImVtYWlsIjoiZmFybWVyQHRlc3QuY29tIiwicm9sZSI6ImZhcm1lciIsImlhdCI6MTc4MTU3MTEzMCwiZXhwIjoxNzgxNjU3NTMwfQ.kmFhILn1I28TtdMMxXNamz6WdpNeh4UarRnQul0fYgw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3003/api/cases/6a309f0fc6845a017afdb9d4/notes
+        name: Case - Add Notes
+        meta:
+          id: req_b409e7600bce46fcb96add99e131dc6c
+          created: 1781572018961
+          modified: 1781572161991
+          isPrivate: false
+          description: ""
+          sortKey: -1781572018961
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{ "notes": "Applied copper spray on Oct 16. Recovery looks good." }'
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA0ZDEyNzZkMDI2MjVmZmUyMzFjYiIsImVtYWlsIjoiZmFybWVyQHRlc3QuY29tIiwicm9sZSI6ImZhcm1lciIsImlhdCI6MTc4MTU3MTEzMCwiZXhwIjoxNzgxNjU3NTMwfQ.kmFhILn1I28TtdMMxXNamz6WdpNeh4UarRnQul0fYgw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3003/api/cases/6a309f0fc6845a017afdb9d4
+        name: Delete case
+        meta:
+          id: req_653cb79e442c45e99be0f696675ba461
+          created: 1781572212548
+          modified: 1781572290587
+          isPrivate: false
+          description: ""
+          sortKey: -1781572212548
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA0ZDEyNzZkMDI2MjVmZmUyMzFjYiIsImVtYWlsIjoiZmFybWVyQHRlc3QuY29tIiwicm9sZSI6ImZhcm1lciIsImlhdCI6MTc4MTU3MTEzMCwiZXhwIjoxNzgxNjU3NTMwfQ.kmFhILn1I28TtdMMxXNamz6WdpNeh4UarRnQul0fYgw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: inferwnce service
+    meta:
+      id: fld_488553f805db4c71b301c43034a58e32
+      created: 1781579568587
+      modified: 1781579568587
+      sortKey: -1781579568587
+      description: ""
+    children:
+      - url: http://localhost:5000/health
+        name: Health check
+        meta:
+          id: req_0deed088d96447e79bb2c991f8eb60a1
+          created: 1781579601392
+          modified: 1781579730335
+          isPrivate: false
+          description: ""
+          sortKey: -1781579601392
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:5000/predict
+        name: Late blight - predict
+        meta:
+          id: req_9607507933e64dbbb455634ff1b21cf7
+          created: 1781579634464
+          modified: 1781581621837
+          isPrivate: false
+          description: ""
+          sortKey: -1781579634464
+        method: POST
+        body:
+          mimeType: multipart/form-data
+          params:
+            - name: crop_type
+              value: tomato
+              description: ""
+              disabled: false
+            - name: image
+              value: ""
+              description: ""
+              disabled: false
+              fileName: C:\Users\USER\Downloads\dem.jpg
+              type: file
+        headers:
+          - name: Content-Type
+            value: multipart/form-data
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: gate way
+    meta:
+      id: fld_e82b209722a341dbaf982ce550329557
+      created: 1781617305668
+      modified: 1781617305668
+      sortKey: -1781617305668
+      description: ""
+    children:
+      - url: http://localhost:3000/health
+        name: "\tHealth"
+        meta:
+          id: req_e0254b0f49c24ed98369d99b7a6d550a
+          created: 1781617323071
+          modified: 1781617416044
+          isPrivate: false
+          description: ""
+          sortKey: -1781617323071
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/api/auth/login
+        name: Login
+        meta:
+          id: req_ae55a9ad629b420c837ae43ec3eac586
+          created: 1781617513808
+          modified: 1781619722372
+          isPrivate: false
+          description: ""
+          sortKey: -1781617513808
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{ "email": "farmer@test.com", "password": "password123" }'
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: ""
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/api/treatment/tomato/Early%20Blight
+        name: Treatment service
+        meta:
+          id: req_d5a2a4c8ee504f8b95fe63d4a3f12dcf
+          created: 1781619430407
+          modified: 1781619459592
+          isPrivate: false
+          description: ""
+          sortKey: -1781619430407
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/api/cases
+        name: Case service
+        meta:
+          id: req_acfaf8b2b47040f080203e52a71f0b49
+          created: 1781619526443
+          modified: 1781619818187
+          isPrivate: false
+          description: ""
+          sortKey: -1781619526443
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMzA0ZDEyNzZkMDI2MjVmZmUyMzFjYiIsImVtYWlsIjoiZmFybWVyQHRlc3QuY29tIiwicm9sZSI6ImZhcm1lciIsImlhdCI6MTc4MTYxOTMwOSwiZXhwIjoxNzgxNzA1NzA5fQ._UKdkYUIxl_bJXzly6gJd1JwXhCVOQVjjJivIW-X2Uk
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/api/inference/health
+        name: Inference service
+        meta:
+          id: req_6923fd27faaa424ca535bbcc174ae036
+          created: 1781619856351
+          modified: 1781619870798
+          isPrivate: false
+          description: ""
+          sortKey: -1781619856351
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.6.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_b8f2808b2467f52432d7dd6fe56ee88adf90ca60
+    created: 1781549772911
+    modified: 1781549772911
+environments:
+  name: Base Environment
+  meta:
+    id: env_b8f2808b2467f52432d7dd6fe56ee88adf90ca60
+    created: 1781549772907
+    modified: 1781550115845
+    isPrivate: false
+  data:
+    BaseURL:
+      base_url: http://localhost:3004

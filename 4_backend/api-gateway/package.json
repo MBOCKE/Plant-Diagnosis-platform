@@ -1,5 +1,22 @@
 {
-  "name": "api-gateway",
-  "version": "0.1.0",
-  "main": "src/app.js"
+  "name": "@plant-diagnosis/api-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway - routes requests to microservices",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "http-proxy-middleware": "^2.0.6",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
 }
