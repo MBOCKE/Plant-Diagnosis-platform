@@ -68,4 +68,45 @@ export const inferenceAPI = {
   },
 };
 
+// -----------------------------
+// Case / Treatment APIs (TODO)
+// -----------------------------
+// These are mock-friendly placeholders. Replace mock returns with real HTTP calls when backend endpoints are ready.
+//
+// Suggested backend wiring (to implement later):
+// - GET   /api/cases/me                  -> list all cases for current user
+// - GET   /api/cases/:caseId           -> single case details
+// - GET   /api/cases/:caseId/treatment -> treatment plan for a case
+//
+// If your backend route names differ, only update the endpoints below.
+
+export const casesAPI = {
+  getUserCases: async () => {
+    // TODO: Replace with real API call, e.g.
+    // const res = await api.get('/cases/me');
+    // return res.data;
+    await new Promise(r => setTimeout(r, 250));
+    return [] as any[];
+  },
+
+  getCaseById: async (caseId: string) => {
+    // TODO: Replace with real API call, e.g.
+    // const res = await api.get(`/cases/${caseId}`);
+    // return res.data;
+    await new Promise(r => setTimeout(r, 250));
+    return null as any;
+  },
+};
+
+export const treatmentAPI = {
+  getTreatmentByCaseId: async (caseId: string) => {
+    // TODO: Replace with real API call, e.g.
+    // const res = await api.get(`/cases/${caseId}/treatment`);
+    // return res.data;
+    await new Promise(r => setTimeout(r, 250));
+    return null as any;
+  },
+};
+
 export default api;
+

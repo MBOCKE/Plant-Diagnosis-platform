@@ -8,11 +8,17 @@ import { Badge } from '../../src/components/Badge';
 import { Card } from '../../src/components/Card';
 import { StyleSheet } from 'react-native';
 import { CropType } from '../../src/types';
+import { mockCases } from '../../src/mock/mockCases';
 
-const recentCases = [
-  { id: '1', crop: 'tomato' as const, disease: 'Late Blight', urgency: 'treat_soon' as const, label: 'Treat Soon', date: '2h ago' },
-  { id: '2', crop: 'banana_plantain' as const, disease: 'Healthy', urgency: 'healthy' as const, label: 'Healthy', date: '1d ago' },
-];
+const cropEmojiByType: Record<CropType, string> = {
+  tomato: '🍅',
+  banana_plantain: '🍌',
+};
+
+
+const homePreviewCases = mockCases.slice(0, 3);
+
+
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -70,25 +76,25 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {recentCases.map(item => (
-          <Card key={item.id} style={{ marginBottom: 12 }}>
-            <View style={styles.caseRow}>
-              <View
-                style={[
-                  styles.caseIcon,
-                  { backgroundColor: item.disease === 'Healthy' ? '#DCFCE7' : '#FFE4CC' },
-                ]}
-              >
-                <Text style={styles.caseEmoji}>{item.crop === 'tomato' ? '🍅' : '🍌'}</Text>
+        {mockCases.slice(0, 3).map(item => (
+          <Card key={item.id} style={{ marginBottom: 12 }} onPress={() => {}}>
+
+          <View style={styles.caseRow}>
+              <View style={styles.caseImageWrap}>
+                {/* Backend photo rendering goes here later via <Image source={{ uri: item.imageUri }} /> */}
+                <Text style={styles.imageMockText}>🖼️</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.caseDisease}>{item.disease}</Text>
-                <Text style={styles.caseDate}>{item.date}</Text>
+                <Text style={styles.caseDisease} numberOfLines={1}>
+                  {item.diagnosis?.primaryDiagnosis?.disease ?? 'Unknown'}
+                </Text>
+                <Text style={styles.caseDate}>{new Date(item.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</Text>
               </View>
-              <Badge urgency={item.urgency} label={item.label} />
+              <Badge urgency={(item.treatment?.urgency ?? 'monitor') as any} label={item.treatment?.urgencyLabel ?? 'Monitor'} />
             </View>
           </Card>
         ))}
+
 
         <View style={{ height: 80 }} />
       </ScrollView>
@@ -160,9 +166,19 @@ const styles = StyleSheet.create({
   historyTitle: { fontSize: 18, fontWeight: '600', color: '#212121' },
   seeAll: { color: '#2E7D32', fontWeight: '700', fontSize: 14 },
   caseRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  caseIcon: { width: 56, height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  caseEmoji: { fontSize: 28 },
+  caseImageWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F5F5',
+    overflow: 'hidden',
+  },
+  imageMockText: { fontSize: 18 },
+
   caseDisease: { fontWeight: '700', color: '#212121' },
   caseDate: { fontSize: 12, color: '#757575', marginTop: 2 },
+
 });
 

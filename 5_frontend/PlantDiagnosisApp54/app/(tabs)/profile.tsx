@@ -1,46 +1,166 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/authStore';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
+import { ProfileAboutContent } from '../../src/components/ProfileAboutContent';
+import { ProfilePrivacyPolicyContent } from '../../src/components/ProfilePrivacyPolicyContent';
+import { ProfileLanguageModal } from '../../src/components/ProfileLanguageModal';
+import { ProfileLocationModal } from '../../src/components/ProfileLocationModal';
+import { AppModal } from '../../src/components/AppModal';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
 
+  const [langVisible, setLangVisible] = React.useState(false);
+  const [locationVisible, setLocationVisible] = React.useState(false);
+  const [aboutVisible, setAboutVisible] = React.useState(false);
+  const [privacyVisible, setPrivacyVisible] = React.useState(false);
+
+  const preferredLabel = user?.preferredLanguage === 'fr' ? 'Français' : 'English';
+  const locationLabel = typeof user?.location === 'string' ? user?.location : 'Not set';
+
   const menuItems = [
-    { icon: 'language' as const, label: 'Preferred Language', value: 'Français' },
-    { icon: 'location' as const, label: 'My Location', value: 'Foumbot, West Region' },
+    {
+      icon: 'language' as const,
+      label: 'Preferred Language',
+      value: preferredLabel,
+      onPress: () => setLangVisible(true),
+    },
+    {
+      icon: 'location' as const,
+      label: 'My Location',
+      value: locationLabel,
+      onPress: () => setLocationVisible(true),
+    },
     { icon: 'notifications' as const, label: 'Notifications', toggle: true },
-    { icon: 'information-circle' as const, label: 'About' },
-    { icon: 'shield-checkmark' as const, label: 'Privacy Policy' },
+    { icon: 'information-circle' as const, label: 'About', onPress: () => setAboutVisible(true) },
+    { icon: 'shield-checkmark' as const, label: 'Privacy Policy', onPress: () => setPrivacyVisible(true) },
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F5F5F5]">
-      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-        <View className="items-center mt-6 mb-8">
-          <View className="w-24 h-24 bg-[#2E7D32] rounded-full items-center justify-center mb-3">
-            <Text className="text-white text-3xl font-bold">{(user?.name || 'F').charAt(0).toUpperCase()}</Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.avatarBlock}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarLetter}>{(user?.name || 'F').charAt(0).toUpperCase()}</Text>
           </View>
-          <Text className="text-xl font-bold text-[#212121]">{user?.name || 'Farmer'}</Text>
-          <Text className="text-sm text-[#757575]">{user?.email || 'farmer@email.com'}</Text>
+          <Text style={styles.name}>{user?.name || 'Farmer'}</Text>
+          <Text style={styles.email}>{user?.email || 'farmer@email.com'}</Text>
         </View>
-        <Card className="mb-8 p-0 overflow-hidden">
+
+        <Card style={styles.card}>
           {menuItems.map((item, i) => (
-            <TouchableOpacity key={i} className="flex-row items-center justify-between px-5 py-4 border-b border-[#F5F5F5] last:border-0">
-              <View className="flex-row items-center gap-3"><Ionicons name={item.icon} size={22} color="#757575" /><Text className="text-[#212121]">{item.label}</Text></View>
-              {item.toggle ? (
-                <View className="w-11 h-6 bg-[#2E7D32] rounded-full justify-center items-end px-0.5"><View className="w-5 h-5 bg-white rounded-full" /></View>
-              ) : (
-                <View className="flex-row items-center gap-2">{item.value && <Text className="text-sm text-[#757575]">{item.value}</Text>}<Ionicons name="chevron-forward" size={18} color="#757575" /></View>
-              )}
+            <TouchableOpacity
+              key={i}
+              activeOpacity={0.8}
+              onPress={item.toggle ? undefined : item.onPress}
+              disabled={item.toggle}
+            >
+              <View style={[styles.menuRow, i === menuItems.length - 1 ? styles.menuRowLast : null]}>
+                <View style={styles.menuLeft}>
+                  <Ionicons name={item.icon} size={22} color="#757575" />
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                </View>
+
+                {item.toggle ? (
+                  <View style={styles.toggleTrack}>
+                    <View style={styles.toggleThumb} />
+                  </View>
+                ) : (
+                  <View style={styles.menuRight}>
+                    {'value' in item && item.value ? <Text style={styles.menuValue}>{item.value}</Text> : null}
+                    <Ionicons name="chevron-forward" size={18} color="#757575" />
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </Card>
-        <Button title="Logout" onPress={logout} variant="danger" icon="log-out-outline" className="mb-10" />
+
+        <View style={{ marginTop: 12 }}>
+          <Button title="Logout" onPress={logout} variant="danger" icon="log-out-outline" />
+        </View>
+        <View style={{ height: 18 }} />
       </ScrollView>
+
+      <ProfileLanguageModal visible={langVisible} onClose={() => setLangVisible(false)} />
+      <ProfileLocationModal visible={locationVisible} onClose={() => setLocationVisible(false)} />
+
+      <AppModal visible={aboutVisible} title="About" onClose={() => setAboutVisible(false)}>
+        <ProfileAboutContent />
+      </AppModal>
+
+      <AppModal visible={privacyVisible} title="Privacy Policy" onClose={() => setPrivacyVisible(false)}>
+        <ProfilePrivacyPolicyContent />
+      </AppModal>
     </SafeAreaView>
   );
 }
+
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#F5F5F5' },
+  scroll: { flex: 1, paddingHorizontal: 24 },
+
+  avatarBlock: {
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 22,
+  },
+  avatarCircle: {
+    width: 96,
+    height: 96,
+    backgroundColor: '#2E7D32',
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  avatarLetter: { color: '#FFFFFF', fontSize: 28, fontWeight: '800' },
+  name: { fontSize: 20, fontWeight: '800', color: '#212121' },
+  email: { marginTop: 6, fontSize: 13, color: '#757575' },
+
+  card: {
+    padding: 0,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+  },
+
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  menuRowLast: { borderBottomWidth: 0 },
+
+  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  menuLabel: { color: '#212121', fontSize: 15, fontWeight: '800' },
+
+  menuRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  menuValue: { fontSize: 13, color: '#757575', fontWeight: '700' },
+
+  toggleTrack: {
+    width: 44,
+    height: 24,
+    backgroundColor: '#2E7D32',
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 3,
+  },
+  toggleThumb: {
+    width: 18,
+    height: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+  },
+});
+
