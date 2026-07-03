@@ -45,5 +45,6 @@ export interface Case {
   treatment?: TreatmentPlan;
   followUpNotes?: string;
   isOfflineCase: boolean;
+  isArchived?: boolean;
   createdAt: string;
 }

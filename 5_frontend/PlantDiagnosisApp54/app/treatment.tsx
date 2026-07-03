@@ -1,56 +1,114 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../src/components/Header';
+import { useRouter } from 'expo-router';
 import { Badge } from '../src/components/Badge';
-import { Button } from '../src/components/Button';
+import { TreatmentSkeleton } from '../src/components/LoadingSkeleton';
+import { treatmentAPI } from '../src/services/api';
 
 export default function TreatmentScreen() {
-  const params = useLocalSearchParams<{ crop?: string; disease?: string }>();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ crop?: string; disease?: string; treatment?: string }>();
   const [expanded, setExpanded] = useState<string[]>(['cultural']);
+  const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState<any>(null);
 
-  const sections = useMemo(
-    () => [
-      {
-        id: 'cultural',
-        icon: 'leaf' as const,
-        title: 'Cultural Practices',
-        items: ['Remove infected leaves', 'Improve air circulation', 'Avoid overhead watering', 'Apply mulch'],
-      },
-      {
-        id: 'biological',
-        icon: 'flask' as const,
-        title: 'Biological Controls',
-        items: ['Apply Trichoderma to soil', 'Use Bacillus subtilis spray'],
-      },
-      {
-        id: 'chemical',
-        icon: 'beaker' as const,
-        title: 'Chemical Options',
-        items: ['Copper hydroxide 2g/L every 7-10 days', 'Chlorothalonil as preventive'],
-      },
-      {
-        id: 'safety',
-        icon: 'shield-checkmark' as const,
-        title: 'Safety Precautions',
-        items: ['Wear gloves and mask', '7-day pre-harvest interval', 'Spray early morning'],
-      },
-    ],
-    [],
-  );
+  const handleClose = () => {
+    if (typeof (router as { dismissAll?: () => void }).dismissAll === 'function') {
+      (router as { dismissAll: () => void }).dismissAll();
+    }
+    router.replace('/(tabs)');
+  };
+
+  useEffect(() => {
+    let parsed = null;
+    try {
+      parsed = params.treatment ? JSON.parse(params.treatment) : null;
+    } catch {
+      parsed = null;
+    }
+
+    if (parsed && Object.keys(parsed).length) {
+      setPlan(parsed);
+      setLoading(false);
+      return;
+    }
+
+    const run = async () => {
+      if (!params.crop || !params.disease) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const fetched = await treatmentAPI.getTreatmentByCaseId(params.crop || '', params.disease);
+        setPlan(fetched || {
+          urgency: 'treat_soon',
+          urgencyLabel: 'Treat Soon',
+          cultural: ['Remove infected leaves', 'Improve air circulation'],
+          biological: ['Apply Trichoderma to soil'],
+          chemical: ['Follow crop-safe fungicide guidance'],
+          precautions: ['Wear gloves and mask', 'Follow local agronomic guidance'],
+        });
+      } catch {
+        setPlan({
+          urgency: 'treat_soon',
+          urgencyLabel: 'Treat Soon',
+          cultural: ['Remove infected leaves', 'Improve air circulation'],
+          biological: ['Apply Trichoderma to soil'],
+          chemical: ['Follow crop-safe fungicide guidance'],
+          precautions: ['Wear gloves and mask', 'Follow local agronomic guidance'],
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, [params.crop, params.disease, params.treatment]);
+
+  const sections = useMemo(() => [
+    {
+      id: 'cultural',
+      icon: 'leaf' as const,
+      title: 'Cultural Practices',
+      items: plan?.cultural || [],
+    },
+    {
+      id: 'biological',
+      icon: 'flask' as const,
+      title: 'Biological Controls',
+      items: plan?.biological || [],
+    },
+    {
+      id: 'chemical',
+      icon: 'beaker' as const,
+      title: 'Chemical Options',
+      items: plan?.chemical || [],
+    },
+    {
+      id: 'safety',
+      icon: 'shield-checkmark' as const,
+      title: 'Safety Precautions',
+      items: plan?.precautions || [],
+    },
+  ], [plan]);
+
+  if (loading) return <TreatmentSkeleton />;
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Header title="Treatment Info" showBack />
+      <Header title="Treatment Info" rightIcon="close" onRightPress={handleClose} />
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
           <View style={styles.topLeft}>
             <Text style={styles.diseaseTitle}>{params.disease || 'Early Blight'}</Text>
-            <Text style={styles.scientific}>Alternaria solani</Text>
+            <Text style={styles.scientific}>{plan?.scientificName || 'Follow crop-safe guidance'}</Text>
           </View>
-          <Badge urgency="treat_soon" label="Treat Soon" />
+          <Badge urgency={plan?.urgency || 'treat_soon'} label={plan?.urgencyLabel || 'Treat Soon'} />
         </View>
 
         {sections.map(section => {
@@ -83,7 +141,7 @@ export default function TreatmentScreen() {
 
               {isOpen && (
                 <View style={styles.sectionBody}>
-                  {section.items.map((item, i) => (
+                  {section.items.map((item: string, i: number) => (
                     <View key={`${section.id}-${i}`} style={styles.itemRow}>
                       <View style={styles.bulletDot} />
                       <Text style={styles.itemText}>{item}</Text>
@@ -95,9 +153,6 @@ export default function TreatmentScreen() {
           );
         })}
 
-        <View style={styles.footerBtnWrap}>
-          <Button title="Save Treatment" onPress={() => {}} icon="bookmark" />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -160,7 +215,5 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   itemText: { flex: 1, color: '#424242', fontSize: 14 },
-
-  footerBtnWrap: { marginBottom: 32 },
 });
 

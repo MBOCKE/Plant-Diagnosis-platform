@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,8 +7,8 @@ import { useAuthStore } from '../../src/store/authStore';
 import { Badge } from '../../src/components/Badge';
 import { Card } from '../../src/components/Card';
 import { StyleSheet } from 'react-native';
-import { CropType } from '../../src/types';
-import { mockCases } from '../../src/mock/mockCases';
+import { Case, CropType } from '../../src/types';
+import { casesAPI } from '../../src/services/api';
 
 const cropEmojiByType: Record<CropType, string> = {
   tomato: '🍅',
@@ -16,13 +16,36 @@ const cropEmojiByType: Record<CropType, string> = {
 };
 
 
-const homePreviewCases = mockCases.slice(0, 3);
-
-
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const [recentCases, setRecentCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(true);
+  const pulse = useState(new Animated.Value(0.7))[0];
+
+  useEffect(() => {
+    let active = true;
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+
+    setLoading(true);
+    casesAPI.getUserCases({ page: 1, limit: 3 }).then(({ cases }) => {
+      if (active) setRecentCases(cases);
+    }).catch(() => {
+      if (active) setRecentCases([]);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -76,13 +99,19 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {mockCases.slice(0, 3).map(item => (
+        {loading ? (
+          <View style={styles.loadingCard}>
+            <Animated.View style={[styles.loadingIcon, { opacity: pulse }]}> 
+              <Ionicons name="leaf-outline" size={24} color="#2E7D32" />
+            </Animated.View>
+            <Text style={styles.emptyStateTitle}>Loading your recent diagnoses…</Text>
+            <Text style={styles.emptyStateText}>The latest cases are being fetched from the gateway.</Text>
+          </View>
+        ) : recentCases.length > 0 ? recentCases.map(item => (
           <Card key={item.id} style={{ marginBottom: 12 }} onPress={() => {}}>
-
-          <View style={styles.caseRow}>
+            <View style={styles.caseRow}>
               <View style={styles.caseImageWrap}>
-                {/* Backend photo rendering goes here later via <Image source={{ uri: item.imageUri }} /> */}
-                <Text style={styles.imageMockText}>🖼️</Text>
+                <Text style={styles.imageMockText}>{cropEmojiByType[item.cropType] || '🖼️'}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.caseDisease} numberOfLines={1}>
@@ -93,7 +122,12 @@ export default function HomeScreen() {
               <Badge urgency={(item.treatment?.urgency ?? 'monitor') as any} label={item.treatment?.urgencyLabel ?? 'Monitor'} />
             </View>
           </Card>
-        ))}
+        )) : (
+          <View style={styles.emptyStateBox}>
+            <Text style={styles.emptyStateTitle}>No recent diagnoses yet</Text>
+            <Text style={styles.emptyStateText}>Your latest cases will appear here after you diagnose a plant.</Text>
+          </View>
+        )}
 
 
         <View style={{ height: 80 }} />
@@ -179,6 +213,31 @@ const styles = StyleSheet.create({
 
   caseDisease: { fontWeight: '700', color: '#212121' },
   caseDate: { fontSize: 12, color: '#757575', marginTop: 2 },
+  emptyStateBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  loadingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  loadingIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    backgroundColor: '#E8F5E9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  emptyStateTitle: { fontSize: 14, fontWeight: '700', color: '#212121', marginBottom: 4 },
+  emptyStateText: { fontSize: 13, color: '#757575', textAlign: 'center', lineHeight: 18 },
 
 });
 

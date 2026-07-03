@@ -50,9 +50,19 @@ router.get('/:cropType/:diseaseName', async (req, res) => {
       });
     }
 
+    const normalizeDisease = (value) => {
+      if (typeof value !== 'string') return '';
+      return value
+        .trim()
+        .replace(/_/g, ' ')
+        .replace(/\s+/g, ' ');
+    };
+
+    const normalizedDiseaseName = normalizeDisease(diseaseName);
+
     const treatment = await Treatment.findOne({
       cropType,
-      diseaseName: { $regex: new RegExp(`^${diseaseName}$`, 'i') },
+      diseaseName: { $regex: new RegExp(`^${normalizedDiseaseName}$`, 'i') },
     });
 
     if (!treatment) {

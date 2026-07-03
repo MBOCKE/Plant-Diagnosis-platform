@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView } from 'react-native';
 import { AppModal } from './AppModal';
 import { useAuthStore } from '../store/authStore';
+import { useI18n } from '../i18n/i18n';
 
 function normalizeLang(lang: any): 'en' | 'fr' {
   return lang === 'fr' ? 'fr' : 'en';
@@ -13,7 +14,8 @@ type Props = {
 };
 
 export function ProfileLanguageModal({ visible, onClose }: Props) {
-  const { user } = useAuthStore();
+  const { user, setPreferredLanguage } = useAuthStore();
+
   const initial = useMemo(() => normalizeLang(user?.preferredLanguage), [user?.preferredLanguage]);
   const [lang, setLang] = useState<'en' | 'fr'>(initial);
 
@@ -24,35 +26,34 @@ export function ProfileLanguageModal({ visible, onClose }: Props) {
 
   const isFrench = lang === 'fr';
 
+  const { t } = useI18n();
+
   return (
-    <AppModal visible={visible} title="Preferred Language" onClose={onClose}>
+    <AppModal visible={visible} title={t('profile.language.title')} onClose={onClose}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.row}>
-          <Text style={styles.label}>English</Text>
+          <Text style={styles.label}>{t('profile.language.english')}</Text>
+
           <View style={styles.switchWrap}>
             <Switch
               value={isFrench}
-              onValueChange={(v) => setLang(v ? 'fr' : 'en')}
+              onValueChange={(v) => {
+                const next = v ? 'fr' : 'en';
+                setLang(next);
+                setPreferredLanguage(next);
+              }}
+
               trackColor={{ false: '#E0E0E0', true: '#2E7D32' }}
               thumbColor={isFrench ? '#FFFFFF' : '#FFFFFF'}
             />
           </View>
-          <Text style={[styles.label, isFrench ? styles.activeLabel : null]}>Français</Text>
+          <Text style={[styles.label, isFrench ? styles.activeLabel : null]}>{t('profile.language.french')}</Text>
         </View>
+        <Text style={styles.hint}>{t('profile.language.hint')}</Text>
 
-        <Text style={styles.hint}>
-          {lang === 'fr'
-            ? 'Votre interface peut afficher le contenu en français.'
-            : 'Your interface can display content in English.'}
-        </Text>
+        <Text style={styles.current}>{t('profile.language.current')} {lang === 'fr' ? t('profile.language.french') : t('profile.language.english')}</Text>
 
-        <Text style={styles.current}>
-          Current: {lang === 'fr' ? 'Français' : 'English'}
-        </Text>
-
-        <Text style={styles.note}>
-          Note: This demo UI keeps the selection locally. If you connect the backend preference update, we can persist it to your account.
-        </Text>
+        <Text style={styles.note}>{t('profile.language.note')}</Text>
       </ScrollView>
     </AppModal>
   );

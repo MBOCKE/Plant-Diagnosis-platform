@@ -6,18 +6,38 @@ import { Ionicons } from '@expo/vector-icons';
 interface HeaderProps {
   title: string;
   showBack?: boolean;
+  rightIcon?: string;
+  onRightPress?: () => void;
 }
 
-export function Header({ title, showBack }: HeaderProps) {
+export function Header({ title, showBack, rightIcon, onRightPress }: HeaderProps) {
   const router = useRouter();
   return (
-    <View className="flex-row items-center px-6 py-3 bg-white border-b border-[#E0E0E0]">
-      {showBack && (
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <Ionicons name="arrow-back" size={24} color="#2E7D32" />
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      backgroundColor: '#FFFFFF',
+      borderBottomWidth: 1,
+      borderBottomColor: '#E0E0E0',
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {showBack && (
+          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
+            <Ionicons name="arrow-back" size={24} color="#2E7D32" />
+          </TouchableOpacity>
+        )}
+
+        <Text style={{ fontSize: 18, fontWeight: '600', color: '#212121' }}>{title}</Text>
+      </View>
+
+      {rightIcon ? (
+        <TouchableOpacity onPress={onRightPress}>
+          <Ionicons name={rightIcon as any} size={24} color="#2E7D32" />
         </TouchableOpacity>
-      )}
-      <Text className="text-lg font-semibold text-[#212121]">{title}</Text>
+      ) : null}
     </View>
   );
 }

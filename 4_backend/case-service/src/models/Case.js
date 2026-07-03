@@ -66,6 +66,10 @@ const caseSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
     syncedAt: Date,
   },
   { timestamps: true }

@@ -26,7 +26,10 @@ interface AuthState {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  setPreferredLanguage: (lang: 'en' | 'fr') => Promise<void>;
 }
+
+
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -64,5 +67,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       set({ isLoading: false });
     }
+  },
+
+  setPreferredLanguage: async (lang) => {
+    set((state) => {
+      const nextUser = state.user
+        ? { ...state.user, preferredLanguage: lang }
+        : ({ preferredLanguage: lang } as any);
+      AsyncStorage.setItem('user_data', JSON.stringify(nextUser)).catch(() => {});
+      return { user: nextUser };
+    });
   },
 }));

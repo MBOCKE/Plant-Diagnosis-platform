@@ -1,8 +1,9 @@
 const Case = require('../models/Case');
 
 class CaseService {
-  async getCases(userId, { page = 1, limit = 10, cropType, status, search } = {}) {
+  async getCases(userId, { page = 1, limit = 10, cropType, status, search, includeArchived = false } = {}) {
     const filter = { user: userId };
+    if (!includeArchived) filter.isArchived = { $ne: true };
     if (cropType) filter.cropType = cropType;
     if (status) filter.status = status;
 
@@ -62,7 +63,11 @@ class CaseService {
   }
 
   async deleteCase(userId, caseId) {
-    return Case.findOneAndDelete({ _id: caseId, user: userId });
+    return Case.findOneAndUpdate(
+      { _id: caseId, user: userId },
+      { isArchived: true },
+      { new: true }
+    );
   }
 }
 

@@ -47,9 +47,9 @@ router.put('/:id/notes', asyncHandler(async (req, res) => {
 
 // DELETE /api/cases/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
-  const deleted = await caseService.deleteCase(req.user.id, req.params.id);
-  if (!deleted) return error(res, 'Case not found', null, 404);
-  return success(res, 'Case deleted');
+  const archived = await caseService.deleteCase(req.user.id, req.params.id);
+  if (!archived) return error(res, 'Case not found', null, 404);
+  return success(res, 'Case archived', { case: archived });
 }));
 
 module.exports = router;

@@ -1,109 +1,14 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
 import { Case, CropType, UrgencyLevel } from '../../src/types';
+import { casesAPI } from '../../src/services/api';
 
 type Filter = 'all' | 'tomato' | 'banana';
 
-
-const mockCases: Case[] = [
-  {
-    id: '1',
-    cropType: 'tomato',
-    imageUri: 'mock://case-1',
-    symptomsDescription: 'Dark lesions on leaves with yellowing edges. Infection seems to start from lower foliage.',
-    latitude: 43.6045,
-    longitude: 3.8801,
-    status: 'diagnosed',
-    createdAt: '2026-10-15T09:12:00.000Z',
-    isOfflineCase: false,
-    diagnosis: {
-      primaryDiagnosis: {
-        disease: 'Early Blight',
-        scientificName: 'Alternaria solani',
-        confidence: 94,
-      },
-      alternativeDiagnoses: [
-        { disease: 'Late Blight', confidence: 23 },
-        { disease: 'Bacterial Spot', confidence: 12 },
-      ],
-      modelUsed: 'mobilenetv2-v1',
-      inferenceTimeMs: 1247,
-    },
-    treatment: {
-      urgency: 'treat_soon',
-      urgencyLabel: 'Treat Soon',
-      cultural: ['Remove infected leaves', 'Improve air circulation', 'Avoid overhead watering', 'Apply mulch'],
-      biological: ['Apply Trichoderma to soil', 'Use Bacillus subtilis spray'],
-      chemical: ['Copper hydroxide 2g/L every 7-10 days', 'Chlorothalonil as preventive'],
-      precautions: ['Wear gloves and mask', '7-day pre-harvest interval', 'Spray early morning'],
-    },
-    followUpNotes: 'Recheck after 7 days. Keep notes of new lesion spread.',
-  },
-  {
-    id: '2',
-    cropType: 'banana_plantain',
-    imageUri: 'mock://case-2',
-    symptomsDescription: 'Brown to black streaks on leaves; lesions expand rapidly under humid conditions.',
-    latitude: 40.7128,
-    longitude: -74.006,
-    status: 'diagnosed',
-    createdAt: '2026-10-12T15:35:00.000Z',
-    isOfflineCase: false,
-    diagnosis: {
-      primaryDiagnosis: {
-        disease: 'Black Sigatoka',
-        scientificName: 'Pseudocercospora fijiensis',
-        confidence: 89,
-      },
-      alternativeDiagnoses: [
-        { disease: 'Yellow Sigatoka', confidence: 18 },
-        { disease: 'Sigatoka leaf spot', confidence: 11 },
-      ],
-      modelUsed: 'mobilenetv2-v1',
-      inferenceTimeMs: 1320,
-    },
-    treatment: {
-      urgency: 'treat_immediately',
-      urgencyLabel: 'Treat Immediately',
-      cultural: ['Remove heavily infected leaves', 'Reduce plant density for airflow', 'Avoid water splash onto leaves'],
-      biological: ['Apply Trichoderma around the plant base'],
-      chemical: ['Protective fungicide application as per label', 'Copper-based spray during peak humidity'],
-      precautions: ['Use protective gear', 'Follow pre-harvest interval', 'Do not spray during windy hours'],
-    },
-    followUpNotes: 'Inspect bunch area and new leaves every 3-4 days.',
-  },
-  {
-    id: '3',
-    cropType: 'tomato',
-    imageUri: 'mock://case-3',
-    symptomsDescription: 'No visible disease signs. Leaves look uniform in color and texture.',
-    status: 'synced',
-    createdAt: '2026-10-10T08:05:00.000Z',
-    isOfflineCase: true,
-    diagnosis: {
-      primaryDiagnosis: {
-        disease: 'Healthy',
-        confidence: 98,
-      },
-      alternativeDiagnoses: [],
-      modelUsed: 'mobilenetv2-v1',
-      inferenceTimeMs: 990,
-    },
-    treatment: {
-      urgency: 'monitor',
-      urgencyLabel: 'Monitor',
-      cultural: ['Keep regular inspection', 'Maintain balanced fertilization'],
-      biological: [],
-      chemical: [],
-      precautions: ['Avoid unnecessary sprays'],
-    },
-    followUpNotes: 'Continue routine monitoring once per week.',
-  },
-];
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -112,6 +17,12 @@ function formatDate(iso: string) {
 
 function cropToFilter(crop: CropType): Filter {
   return crop === 'tomato' ? 'tomato' : 'banana';
+}
+
+function filterToCropType(filter: Filter): CropType | undefined {
+  if (filter === 'tomato') return 'tomato';
+  if (filter === 'banana') return 'banana_plantain';
+  return undefined;
 }
 
 function cropEmoji(crop: CropType) {
@@ -140,12 +51,51 @@ export default function HistoryScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
+  const [archivedCaseIds, setArchivedCaseIds] = useState<string[]>([]);
 
 
+
+  const [cases, setCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+
+    casesAPI
+      .getUserCases({
+        page: 1,
+        limit: 20,
+        search: query.trim() || undefined,
+        cropType: filterToCropType(filter),
+        includeArchived: true,
+      })
+      .then(({ cases: fetchedCases }) => {
+        if (active) setCases(fetchedCases);
+      })
+      .catch(() => {
+        if (active) {
+          setCases([]);
+          setError('Unable to load cases from the API gateway.');
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [filter, query]);
+
+  const visibleCases = useMemo(() => cases.filter((c: Case) => !c.isArchived && !archivedCaseIds.includes(c.id)), [archivedCaseIds, cases]);
+  const archivedCases = useMemo(() => cases.filter((c: Case) => c.isArchived || archivedCaseIds.includes(c.id)), [archivedCaseIds, cases]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const base = filter === 'all' ? mockCases : mockCases.filter(c => cropToFilter(c.cropType) === filter);
+    const base = filter === 'all' ? visibleCases : visibleCases.filter(c => cropToFilter(c.cropType) === filter);
 
     const searched = q.length
       ? base.filter(c => {
@@ -156,9 +106,22 @@ export default function HistoryScreen() {
         })
       : base;
 
-    // Always show most recent first
     return [...searched].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [filter, query]);
+  }, [filter, query, visibleCases]);
+
+  const handleArchiveCase = async (caseId: string) => {
+    try {
+      await casesAPI.deleteCase(caseId);
+      setCases(prev => prev.map(c => (c.id === caseId ? { ...c, isArchived: true } : c)));
+      setArchivedCaseIds(prev => (prev.includes(caseId) ? prev : [...prev, caseId]));
+      setExpandedIds(prev => prev.filter(id => id !== caseId));
+    } catch {
+      setError('Unable to archive this case right now.');
+    }
+  };
+
+  const showNoCasesState = visibleCases.length === 0;
+  const showNoResultsState = !showNoCasesState && filtered.length === 0;
 
 
   return (
@@ -169,10 +132,16 @@ export default function HistoryScreen() {
 
       <View style={styles.searchRow}>
         <Ionicons name="search" size={18} color="#2E7D32" />
-        {/* Search input placeholder (mock). Replace with TextInput when integrating UX. */}
-        <View style={styles.searchInputWrap}>
-          <Text style={styles.searchPlaceholder} numberOfLines={1}>{query ? query : 'Search by disease / notes...'}</Text>
-        </View>
+        <TextInput
+          style={styles.searchInputWrap}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search by disease / notes..."
+          placeholderTextColor="#A3A3A3"
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+        />
         <TouchableOpacity accessibilityRole="button" onPress={() => setQuery('')}>
           <Ionicons name="close" size={18} color="#757575" />
         </TouchableOpacity>
@@ -195,7 +164,51 @@ export default function HistoryScreen() {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filtered.map(item => {
+        {loading ? (
+          <View style={styles.emptyStateCard}>
+            <View style={styles.emptyStateIconWrap}>
+              <Text style={styles.emptyStateIcon}>⏳</Text>
+            </View>
+            <Text style={styles.emptyStateTitle}>Loading cases…</Text>
+            <Text style={styles.emptyStateText}>Fetching your latest diagnoses from the gateway.</Text>
+          </View>
+        ) : null}
+
+        {error ? (
+          <View style={styles.emptyStateCard}>
+            <View style={styles.emptyStateIconWrap}>
+              <Text style={styles.emptyStateIcon}>⚠️</Text>
+            </View>
+            <Text style={styles.emptyStateTitle}>Unable to load cases</Text>
+            <Text style={styles.emptyStateText}>{error}</Text>
+          </View>
+        ) : null}
+
+        {showNoCasesState ? (
+          <View style={styles.emptyStateCard}>
+            <View style={styles.emptyStateIconWrap}>
+              <Text style={styles.emptyStateIcon}>🌿</Text>
+            </View>
+            <Text style={styles.emptyStateTitle}>No cases yet</Text>
+            <Text style={styles.emptyStateText}>
+              Your diagnosed plant cases will appear here once you capture your first one.
+            </Text>
+          </View>
+        ) : null}
+
+        {showNoResultsState ? (
+          <View style={styles.emptyStateCard}>
+            <View style={styles.emptyStateIconWrap}>
+              <Text style={styles.emptyStateIcon}>🔎</Text>
+            </View>
+            <Text style={styles.emptyStateTitle}>No matching cases</Text>
+            <Text style={styles.emptyStateText}>
+              Try another word or clear the search to see your full case history.
+            </Text>
+          </View>
+        ) : null}
+
+        {!loading && !error && !showNoCasesState && !showNoResultsState ? filtered.map((item: Case) => {
           const isExpanded = expandedIds.includes(item.id);
           const primary = item.diagnosis?.primaryDiagnosis;
           const urgency = item.treatment?.urgency ?? ('monitor' as UrgencyLevel);
@@ -248,7 +261,7 @@ export default function HistoryScreen() {
                     {item.diagnosis?.alternativeDiagnoses?.length ? (
                       <View style={{ marginTop: 10 }}>
                         <Text style={styles.blockSubTitle}>Alternative diagnoses</Text>
-                        {item.diagnosis.alternativeDiagnoses.map((d, idx) => (
+                        {item.diagnosis?.alternativeDiagnoses?.map((d: { disease: string; confidence: number }, idx: number) => (
                           <View key={`${item.id}-alt-${idx}`} style={styles.rowBetween}>
                             <Text style={styles.blockText}>{d.disease}</Text>
                             <Text style={styles.blockTextStrong}>{d.confidence}%</Text>
@@ -311,11 +324,30 @@ export default function HistoryScreen() {
                       <Text style={styles.blockText}>{item.followUpNotes}</Text>
                     </View>
                   ) : null}
+
+                  <TouchableOpacity style={styles.archiveButton} onPress={() => handleArchiveCase(item.id)}>
+                    <Ionicons name="archive-outline" size={16} color="#B91C1C" />
+                    <Text style={styles.archiveButtonText}>Archive case</Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </Card>
           );
-        })}
+        }) : null}
+
+        {archivedCases.length > 0 ? (
+          <View style={styles.archiveSection}>
+            <Text style={styles.archiveTitle}>Archived cases</Text>
+            <Text style={styles.archiveText}>
+              These cases are kept for compliance, reporting, and future analysis.
+            </Text>
+            {archivedCases.map((item: Case) => (
+              <View key={`archived-${item.id}`} style={styles.archiveChip}>
+                <Text style={styles.archiveChipText}>{summarizeDisease(item.diagnosis?.primaryDiagnosis?.disease)}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -355,8 +387,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingVertical: 10,
     paddingHorizontal: 12,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#212121',
   },
-  searchPlaceholder: { color: '#A3A3A3', fontSize: 13, fontWeight: '700' },
 
   scroll: { flex: 1, paddingHorizontal: 24, paddingTop: 6 },
 
@@ -416,6 +450,58 @@ const styles = StyleSheet.create({
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 8 },
   bulletDot: { width: 8, height: 8, borderRadius: 999, backgroundColor: '#2E7D32', marginTop: 6 },
   bulletText: { flex: 1, fontSize: 13, color: '#424242', lineHeight: 18 },
+  archiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+  },
+  archiveButtonText: { color: '#B91C1C', fontSize: 13, fontWeight: '700' },
+  emptyStateCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyStateIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 999,
+    backgroundColor: '#E8F5E9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyStateIcon: { fontSize: 28 },
+  emptyStateTitle: { fontSize: 16, fontWeight: '800', color: '#212121', marginBottom: 6 },
+  emptyStateText: { fontSize: 13, color: '#757575', textAlign: 'center', lineHeight: 20 },
+  archiveSection: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  archiveTitle: { fontSize: 14, fontWeight: '800', color: '#9A2C00', marginBottom: 4 },
+  archiveText: { fontSize: 12, color: '#A16207', marginBottom: 10, lineHeight: 18 },
+  archiveChip: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  archiveChipText: { fontSize: 12, color: '#424242', fontWeight: '700' },
 });
 
 

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView } from 'react-native';
 import { AppModal } from './AppModal';
 import { useAuthStore } from '../store/authStore';
+import { useI18n } from '../i18n/i18n';
 
 function formatLocation(loc: any): string | null {
   if (!loc) return null;
@@ -28,6 +29,7 @@ type Props = {
 
 export function ProfileLocationModal({ visible, onClose }: Props) {
   const { user } = useAuthStore();
+  const { t } = useI18n();
   const locationString = useMemo(() => formatLocation(user?.location), [user?.location]);
   const [showLocation, setShowLocation] = useState(false);
 
@@ -36,10 +38,10 @@ export function ProfileLocationModal({ visible, onClose }: Props) {
   }, [visible]);
 
   return (
-    <AppModal visible={visible} title="My Location" onClose={onClose}>
+    <AppModal visible={visible} title={t('profile.location.title')} onClose={onClose}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.row}>
-          <Text style={styles.label}>Show location</Text>
+          <Text style={styles.label}>{t('profile.location.showLocation')}</Text>
           <Switch
             value={showLocation}
             onValueChange={(v) => setShowLocation(v)}
@@ -49,14 +51,12 @@ export function ProfileLocationModal({ visible, onClose }: Props) {
         </View>
 
         {!showLocation ? (
-          <Text style={styles.hiddenText}>Location is hidden.</Text>
+          <Text style={styles.hiddenText}>{t('profile.location.hidden')}</Text>
         ) : (
-          <Text style={styles.locationText}>{locationString ?? 'Location not set.'}</Text>
+          <Text style={styles.locationText}>{locationString ?? t('profile.location.notSet')}</Text>
         )}
 
-        <Text style={styles.note}>
-          Location is displayed based on your account data. You can hide it anytime using the toggle.
-        </Text>
+        <Text style={styles.note}>{t('profile.location.note')}</Text>
       </ScrollView>
     </AppModal>
   );

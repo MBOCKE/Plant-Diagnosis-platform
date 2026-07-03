@@ -1,7 +1,26 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const API_URL = 'http://localhost:3000/api';
+function resolveApiBaseUrl() {
+  const configuredUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (configuredUrl) {
+    return configuredUrl.endsWith('/api') ? configuredUrl : `${configuredUrl.replace(/\/$/, '')}/api`;
+  }
+
+  const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest?.debuggerHost;
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    return `http://${host}:3000/api`;
+  }
+
+  if (Platform.OS === 'android') return 'http://10.0.2.2:3000/api';
+  if (Platform.OS === 'ios') return 'http://127.0.0.1:3000/api';
+  return 'http://localhost:3000/api';
+}
+
+const API_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_URL,
@@ -15,11 +34,26 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+function unwrapApiData<T>(payload: any): T {
+  return payload?.data ?? payload;
+}
+
+function normalizeCase(raw: any) {
+  return {
+    ...raw,
+    id: raw?.id || raw?._id,
+    createdAt: raw?.createdAt || raw?.created_at || new Date().toISOString(),
+    cropType: raw?.cropType || raw?.crop,
+    isOfflineCase: Boolean(raw?.isOfflineCase),
+    isArchived: Boolean(raw?.isArchived),
+  };
+}
+
 export const authAPI = {
   login: async (email: string, password: string) => {
-    // TODO: Replace with real API call
-    await new Promise(r => setTimeout(r, 500));
-    return { user: { id: '1', email, name: 'Jean', preferredLanguage: 'en' as const }, token: 'demo_token' };
+    const res = await api.post('/auth/login', { email, password });
+    const payload = unwrapApiData<any>(res.data);
+    return { user: payload.user, token: payload.token };
   },
 
   register: async (data: {
@@ -30,81 +64,101 @@ export const authAPI = {
     preferredLanguage?: 'en' | 'fr';
     location?: any;
   }) => {
-    // TODO: Replace with real API call
-    await new Promise(r => setTimeout(r, 500));
+    const res = await api.post('/auth/register', data);
+    const payload = unwrapApiData<any>(res.data);
     return {
-      user: {
-        id: '1',
-        email: data.email,
-        name: data.name,
-        phone: data.phone,
-        preferredLanguage: data.preferredLanguage || 'en' as const,
-        location: data.location || null,
-      },
-      token: 'demo_token',
+      user: payload.user,
+      token: payload.token,
     };
   },
 };
 
 export const inferenceAPI = {
   diagnose: async (imageUri: string, cropType: string) => {
-    await new Promise(r => setTimeout(r, 1500));
+    const formData = new FormData();
+    formData.append('image', {
+      uri: imageUri,
+      name: 'image.jpg',
+      type: 'image/jpeg',
+    } as any);
+    formData.append('crop_type', cropType);
+
+    const inferenceRes = await api.post('/inference/predict', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    const inferencePayload = unwrapApiData<any>(inferenceRes.data);
+
+    const diagnosis = {
+      primaryDiagnosis: inferencePayload.primaryDiagnosis || inferencePayload.diagnosis?.primaryDiagnosis,
+      alternativeDiagnoses: inferencePayload.alternativeDiagnoses || inferencePayload.diagnosis?.alternativeDiagnoses || [],
+      modelUsed: inferencePayload.modelUsed || inferencePayload.diagnosis?.modelUsed || 'unknown',
+      inferenceTimeMs: inferencePayload.inferenceTimeMs || inferencePayload.diagnosis?.inferenceTimeMs || 0,
+    };
+
+    let treatment = null;
+    if (diagnosis.primaryDiagnosis?.disease) {
+      try {
+        const treatmentRes = await api.get(`/treatment/${encodeURIComponent(cropType)}/${encodeURIComponent(diagnosis.primaryDiagnosis.disease)}`);
+        const treatmentPayload = unwrapApiData<any>(treatmentRes.data);
+        treatment = treatmentPayload.treatment || treatmentPayload;
+      } catch {
+        treatment = {
+          urgency: 'treat_soon',
+          urgencyLabel: 'Treat Soon',
+          cultural: ['Remove infected leaves', 'Improve air circulation', 'Avoid overhead watering'],
+          biological: ['Apply Trichoderma to soil'],
+          chemical: ['Follow crop-safe fungicide guidance'],
+          precautions: ['Wear gloves and mask', 'Follow local agronomic guidance'],
+        };
+      }
+    }
+
     return {
-      diagnosis: {
-        primaryDiagnosis: { disease: 'Early Blight', scientificName: 'Alternaria solani', confidence: 94 },
-        alternativeDiagnoses: [{ disease: 'Late Blight', confidence: 23 }, { disease: 'Bacterial Spot', confidence: 12 }],
-        modelUsed: 'mobilenetv2-v1',
-        inferenceTimeMs: 1247,
-      },
-      treatment: {
-        urgency: 'treat_soon' as const,
-        urgencyLabel: 'Treat Soon',
-        cultural: ['Remove infected leaves', 'Improve air circulation', 'Avoid overhead watering', 'Apply mulch'],
-        biological: ['Apply Trichoderma to soil', 'Use Bacillus subtilis spray'],
-        chemical: ['Copper hydroxide 2g/L every 7-10 days', 'Chlorothalonil as preventive'],
-        precautions: ['Wear gloves and mask', '7-day pre-harvest interval', 'Spray early morning'],
-      },
+      diagnosis,
+      treatment,
     };
   },
 };
 
-// -----------------------------
-// Case / Treatment APIs (TODO)
-// -----------------------------
-// These are mock-friendly placeholders. Replace mock returns with real HTTP calls when backend endpoints are ready.
-//
-// Suggested backend wiring (to implement later):
-// - GET   /api/cases/me                  -> list all cases for current user
-// - GET   /api/cases/:caseId           -> single case details
-// - GET   /api/cases/:caseId/treatment -> treatment plan for a case
-//
-// If your backend route names differ, only update the endpoints below.
-
 export const casesAPI = {
-  getUserCases: async () => {
-    // TODO: Replace with real API call, e.g.
-    // const res = await api.get('/cases/me');
-    // return res.data;
-    await new Promise(r => setTimeout(r, 250));
-    return [] as any[];
+  getUserCases: async (params?: { page?: number; limit?: number; cropType?: string; status?: string; search?: string; includeArchived?: boolean }) => {
+    const res = await api.get('/cases', { params });
+    const payload = unwrapApiData<any>(res.data) || {};
+    const cases = Array.isArray(payload.cases) ? payload.cases : Array.isArray(payload) ? payload : [];
+    return {
+      cases: cases.map(normalizeCase),
+      pagination: payload.pagination || { page: 1, limit: cases.length, total: cases.length, pages: 1 },
+    };
   },
 
   getCaseById: async (caseId: string) => {
-    // TODO: Replace with real API call, e.g.
-    // const res = await api.get(`/cases/${caseId}`);
-    // return res.data;
-    await new Promise(r => setTimeout(r, 250));
-    return null as any;
+    const res = await api.get(`/cases/${caseId}`);
+    const payload = unwrapApiData<any>(res.data) || {};
+    return normalizeCase(payload.case || payload);
+  },
+
+  deleteCase: async (caseId: string) => {
+    const res = await api.delete(`/cases/${caseId}`);
+    const payload = unwrapApiData<any>(res.data) || {};
+    return Boolean(payload.case || payload.success);
   },
 };
 
 export const treatmentAPI = {
-  getTreatmentByCaseId: async (caseId: string) => {
-    // TODO: Replace with real API call, e.g.
-    // const res = await api.get(`/cases/${caseId}/treatment`);
-    // return res.data;
-    await new Promise(r => setTimeout(r, 250));
-    return null as any;
+  getTreatmentByCaseId: async (caseIdOrCrop: string, diseaseName?: string) => {
+    if (diseaseName) {
+      const res = await api.get(`/treatment/${encodeURIComponent(caseIdOrCrop)}/${encodeURIComponent(diseaseName)}`);
+      const payload = unwrapApiData<any>(res.data) || {};
+      return payload.treatment || payload;
+    }
+
+    const caseRecord = await casesAPI.getCaseById(caseIdOrCrop);
+    if (!caseRecord) return null;
+
+    const resolvedDiseaseName = caseRecord.diagnosis?.primaryDiagnosis?.disease || 'healthy';
+    const res = await api.get(`/treatment/${encodeURIComponent(caseRecord.cropType)}/${encodeURIComponent(resolvedDiseaseName)}`);
+    const payload = unwrapApiData<any>(res.data) || {};
+    return payload.treatment || payload;
   },
 };
 
