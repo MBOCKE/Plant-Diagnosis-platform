@@ -1,10 +1,20 @@
 const Case = require('../models/Case');
 
 class CaseService {
-  async getCases(userId, { page = 1, limit = 10, cropType, status } = {}) {
+  async getCases(userId, { page = 1, limit = 10, cropType, status, search } = {}) {
     const filter = { user: userId };
     if (cropType) filter.cropType = cropType;
     if (status) filter.status = status;
+
+    // Search across disease name, symptoms, and crop type
+    if (search) {
+      filter.$or = [
+        { 'diagnosis.primaryDiagnosis.disease': { $regex: search, $options: 'i' } },
+        { symptomsDescription: { $regex: search, $options: 'i' } },
+        { cropType: { $regex: search, $options: 'i' } },
+        { followUpNotes: { $regex: search, $options: 'i' } },
+      ];
+    }
 
     const cases = await Case.find(filter)
       .sort({ createdAt: -1 })

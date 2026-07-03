@@ -81,11 +81,36 @@ app.use('/api/treatment', (req, res) => proxyRequest(req, res, TREATMENT_URL));
 // Case Service
 app.use('/api/cases', (req, res) => proxyRequest(req, res, CASE_URL));
 
-// Inference Service
+// Inference Service - handles multipart file uploads
 app.use('/api/inference', (req, res) => {
-  // Remove /api/inference prefix for the Python service
-  req.originalUrl = req.originalUrl.replace('/api/inference', '');
-  proxyRequest(req, res, INFERENCE_URL);
+  const targetUrl = `${INFERENCE_URL}${req.originalUrl.replace('/api/inference', '')}`;
+  
+  // Check if it's a file upload
+  const contentType = req.headers['content-type'] || '';
+  
+  if (contentType.includes('multipart/form-data')) {
+    // Collect raw body chunks for file upload
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', async () => {
+      try {
+        const body = Buffer.concat(chunks);
+        const response = await fetch(targetUrl, {
+          method: req.method,
+          headers: { 'content-type': contentType },
+          body: body,
+        });
+        const data = await response.json();
+        res.status(response.status).json(data);
+      } catch (error) {
+        res.status(502).json({ success: false, message: 'Inference service unavailable' });
+      }
+    });
+    return;
+  }
+  
+  // Regular JSON request
+  proxyRequest(req, res, targetUrl);
 });
 
 // Health check

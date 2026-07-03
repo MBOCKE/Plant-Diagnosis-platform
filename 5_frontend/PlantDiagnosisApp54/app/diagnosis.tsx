@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, Alert } from 'react-native';
 
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,8 @@ import { Button } from '../src/components/Button';
 import { DiagnosisSkeleton } from '../src/components/LoadingSkeleton';
 import { inferenceAPI } from '../src/services/api';
 import { DiagnosisResult, TreatmentPlan } from '../src/types';
+import { useNetworkInfo } from '../src/hooks/useNetworkInfo';
+import { enqueueOfflineCase, syncOfflineCases } from '../src/services/offlineSync';
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F5F5' },
@@ -41,14 +43,48 @@ export default function DiagnosisScreen() {
   const [treatment, setTreatment] = React.useState<TreatmentPlan | null>(null);
 
 
+  const { isConnected } = useNetworkInfo();
+
+  useEffect(() => {
+    // Opportunistic sync whenever this screen is opened and network is available
+    if (isConnected) {
+      syncOfflineCases().catch(() => {
+        // swallow; user can retry later
+      });
+    }
+  }, [isConnected]);
+
   useEffect(() => {
     if (params.imageUri && params.crop) {
-      inferenceAPI.diagnose(params.imageUri, params.crop).then(res => {
-        setResult(res.diagnosis);
-        setTreatment(res.treatment);
-      }).finally(() => setLoading(false));
+      const run = async () => {
+        if (!isConnected) {
+          await enqueueOfflineCase({
+            localId: `${Date.now()}`,
+            cropType: params.crop as any,
+            imageUri: params.imageUri,
+            symptomsDescription: undefined,
+            latitude: undefined,
+            longitude: undefined,
+            createdAt: new Date().toISOString(),
+          });
+
+          Alert.alert('Saved Offline', 'Your case will be diagnosed when internet is available.');
+          router.back();
+          return;
+        }
+
+        inferenceAPI
+          .diagnose(params.imageUri, params.crop)
+          .then(res => {
+            setResult(res.diagnosis);
+            setTreatment(res.treatment);
+          })
+          .finally(() => setLoading(false));
+      };
+
+      run();
     }
-  }, []);
+  }, [params.imageUri, params.crop, isConnected]);
 
   if (loading) return <DiagnosisSkeleton />;
 
