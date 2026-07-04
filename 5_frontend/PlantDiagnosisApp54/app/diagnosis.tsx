@@ -10,9 +10,10 @@ import { Badge } from '../src/components/Badge';
 import { Button } from '../src/components/Button';
 import { DiagnosisSkeleton } from '../src/components/LoadingSkeleton';
 
-import { inferenceAPI } from '../src/services/api';
+import { inferenceAPI, casesAPI } from '../src/services/api';
 import { DiagnosisResult, TreatmentPlan } from '../src/types';
 import { useNetworkInfo } from '../src/hooks/useNetworkInfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { enqueueOfflineCase, syncOfflineCases } from '../src/services/offlineSync';
 
 import { useI18n } from '../src/i18n/i18n';
@@ -83,7 +84,10 @@ export default function DiagnosisScreen() {
   }, [isConnected]);
 
   useEffect(() => {
-    if (!(params.imageUri && params.crop)) return;
+      if (!(params.imageUri && params.crop)) {
+        setLoading(false);
+        return;
+      }
 
     const run = async () => {
       if (!isConnected) {
@@ -104,9 +108,48 @@ export default function DiagnosisScreen() {
 
       inferenceAPI
         .diagnose(params.imageUri, params.crop)
-        .then(res => {
+        .then(async res => {
           setResult(res.diagnosis);
           setTreatment(res.treatment);
+
+          // Create case in backend so it appears in History + Home recent section
+          // (Only when connected; offline is already queued in the else branch)
+          console.log('createCase gate:', {
+            isConnected,
+            disease: res?.diagnosis?.primaryDiagnosis?.disease,
+            primaryDiagnosis: res?.diagnosis?.primaryDiagnosis,
+            diagnosisPayload: res?.diagnosis,
+          });
+          if (isConnected && res?.diagnosis?.primaryDiagnosis?.disease) {
+            try {
+              // backend expects cropType, diagnosis, imageUri, symptomsDescription, status, etc.
+              // We pass what we have; Case schema will fill defaults where allowed.
+              // Create case using the gateway: POST /api/cases
+              // Note: the case-service route requires authentication (authMiddleware).
+              // Use the gateway via axios instance in casesAPI.
+              await casesAPI.createCase({
+                cropType: params.crop as any,
+                imageUri: params.imageUri,
+                diagnosis: res.diagnosis,
+                symptomsDescription: undefined,
+                latitude: undefined,
+                longitude: undefined,
+                followUpNotes: undefined,
+              });
+            } catch (e: any) {
+              console.error('Failed to create case:', {
+                message: e?.message,
+                status: e?.response?.status,
+                data: e?.response?.data,
+              });
+              // Don't block the UI; user can create later from history.
+            }
+          }
+        })
+        .catch(err => {
+          // Make sure the screen doesn't blank due to an unhandled error
+          Alert.alert('Diagnosis failed', 'Unable to run inference. Please try again.');
+          console.error('Inference error:', err);
         })
         .finally(() => setLoading(false));
     };
@@ -122,6 +165,9 @@ export default function DiagnosisScreen() {
         <Header title={t('diagnosis.title')} showBack />
         <View style={styles.center}>
           <Text style={styles.muted}>{t('diagnosis.failed')}</Text>
+          <Text style={[styles.muted, { marginTop: 8, textAlign: 'center' }]}>
+            {isConnected ? 'Try again later.' : 'Check your internet connection and retry.'}
+          </Text>
         </View>
       </SafeAreaView>
     );

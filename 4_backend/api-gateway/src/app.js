@@ -41,9 +41,7 @@ async function proxyRequest(req, res, targetUrl) {
     
     const options = {
       method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
     };
 
     if (req.headers.authorization) {
@@ -56,6 +54,12 @@ async function proxyRequest(req, res, targetUrl) {
 
     const response = await fetch(url, options);
     const data = await response.json();
+    
+    // Prevent caching - ensures fresh data every time
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+    });
     
     res.status(response.status).json(data);
   } catch (error) {

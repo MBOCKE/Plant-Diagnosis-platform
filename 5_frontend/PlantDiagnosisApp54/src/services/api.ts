@@ -121,6 +121,12 @@ export const inferenceAPI = {
 };
 
 export const casesAPI = {
+  createCase: async (data: any) => {
+    const res = await api.post('/cases', data);
+    const payload = unwrapApiData<any>(res.data) || {};
+    return payload.case || payload;
+  },
+
   getUserCases: async (params?: { page?: number; limit?: number; cropType?: string; status?: string; search?: string; includeArchived?: boolean }) => {
     const res = await api.get('/cases', { params });
     const payload = unwrapApiData<any>(res.data) || {};

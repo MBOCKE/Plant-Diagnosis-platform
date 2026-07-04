@@ -62,7 +62,7 @@ router.get('/:cropType/:diseaseName', async (req, res) => {
 
     const treatment = await Treatment.findOne({
       cropType,
-      diseaseName: { $regex: new RegExp(`^${normalizedDiseaseName}$`, 'i') },
+      diseaseName: { $regex: new RegExp('^' + normalizedDiseaseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') },
     });
 
     if (!treatment) {
