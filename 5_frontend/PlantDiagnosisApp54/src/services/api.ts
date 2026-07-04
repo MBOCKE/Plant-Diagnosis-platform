@@ -143,6 +143,13 @@ export const casesAPI = {
     return normalizeCase(payload.case || payload);
   },
 
+  updateCaseNotes: async (caseId: string, notes: string) => {
+    const res = await api.put(`/cases/${caseId}/notes`, { notes });
+    const payload = unwrapApiData<any>(res.data) || {};
+    // backend returns { case: updatedCase } per responseHelper
+    return normalizeCase(payload.case || payload);
+  },
+
   deleteCase: async (caseId: string) => {
     const res = await api.delete(`/cases/${caseId}`);
     const payload = unwrapApiData<any>(res.data) || {};

@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
 import { Case, CropType, UrgencyLevel } from '../../src/types';
 import { casesAPI } from '../../src/services/api';
+
 
 type Filter = 'all' | 'tomato' | 'banana';
 
@@ -38,6 +39,14 @@ function summarizeDisease(disease?: string) {
   return disease || 'Unknown';
 }
 
+function urgencyFromCase(item: Case): { urgency: UrgencyLevel | 'healthy'; urgencyLabel: string } {
+  const urgency = (item.treatment?.urgency ?? 'monitor') as UrgencyLevel;
+  // If backend gives urgencyLabel but not urgency, prefer label; for Badge we still need a valid urgency key.
+  const urgencyLabel = item.treatment?.urgencyLabel ?? 'Monitor';
+  return { urgency, urgencyLabel };
+}
+
+
 const sectionStyles = {
   card: {
     backgroundColor: '#FFFFFF',
@@ -53,11 +62,13 @@ export default function HistoryScreen() {
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const [archivedCaseIds, setArchivedCaseIds] = useState<string[]>([]);
 
-
+  const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [draftNotes, setDraftNotes] = useState<string>('');
 
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
 
   useEffect(() => {
     let active = true;
@@ -119,6 +130,27 @@ export default function HistoryScreen() {
       setError('Unable to archive this case right now.');
     }
   };
+
+  const startEditingNotes = (item: Case) => {
+    setEditingNotesId(item.id);
+    setDraftNotes(item.followUpNotes ?? '');
+  };
+
+  const cancelEditingNotes = () => {
+    setEditingNotesId(null);
+    setDraftNotes('');
+  };
+
+  const saveNotes = async (caseId: string) => {
+    try {
+      await casesAPI.updateCaseNotes(caseId, draftNotes);
+      setCases(prev => prev.map(c => (c.id === caseId ? { ...c, followUpNotes: draftNotes } : c)));
+      cancelEditingNotes();
+    } catch {
+      Alert.alert('Unable to save', 'Please try again.');
+    }
+  };
+
 
   const showNoCasesState = visibleCases.length === 0;
   const showNoResultsState = !showNoCasesState && filtered.length === 0;
@@ -211,8 +243,8 @@ export default function HistoryScreen() {
         {!loading && !error && !showNoCasesState && !showNoResultsState ? filtered.map((item: Case) => {
           const isExpanded = expandedIds.includes(item.id);
           const primary = item.diagnosis?.primaryDiagnosis;
-          const urgency = item.treatment?.urgency ?? ('monitor' as UrgencyLevel);
-          const urgencyLabel = item.treatment?.urgencyLabel ?? 'Monitor';
+          const { urgency, urgencyLabel } = urgencyFromCase(item);
+
 
           return (
             <Card key={item.id} style={sectionStyles.card}>
@@ -222,11 +254,15 @@ export default function HistoryScreen() {
                   setExpandedIds(prev => (prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]))
                 }
               >
-                <View style={styles.caseTopRow}>
+                  <View style={styles.caseTopRow}>
                 <View style={styles.caseImageWrap}>
-                    {/* When backend is connected, render the real image here using <Image source={{ uri: item.imageUri }} /> */}
-                    <Text style={styles.imageMockText}>{item.imageUri ? '🖼️' : cropEmoji(item.cropType)}</Text>
+                    {item.imageUri ? (
+                      <Image source={{ uri: item.imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    ) : (
+                      <Text style={styles.imageMockText}>{cropEmoji(item.cropType)}</Text>
+                    )}
                   </View>
+
 
 
 
@@ -272,10 +308,21 @@ export default function HistoryScreen() {
                   </View>
 
                   <View style={styles.gridBlock}>
-                    <Text style={styles.blockTitle}>Symptoms</Text>
-                    <Text style={styles.blockText}>{item.symptomsDescription ?? '—'}</Text>
+                    <Text style={styles.blockTitle}>Treatment plan</Text>
+                    <Text style={styles.blockText}>Urgency: {item.treatment?.urgencyLabel ?? '—'}</Text>
+                    {item.treatment?.cultural?.length ? (
+                      <Text style={styles.blockText}>Cultural: {item.treatment.cultural[0]}</Text>
+                    ) : null}
+                    {item.treatment?.biological?.length ? (
+                      <Text style={styles.blockText}>Biological: {item.treatment.biological[0]}</Text>
+                    ) : null}
+                    {item.treatment?.chemical?.length ? (
+                      <Text style={styles.blockText}>Chemical: {item.treatment.chemical[0]}</Text>
+                    ) : null}
                     {typeof item.latitude === 'number' && typeof item.longitude === 'number' ? (
-                      <Text style={styles.blockText}>Location: {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}</Text>
+                      <Text style={styles.blockText}>
+                        Location: {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
+                      </Text>
                     ) : null}
                     <Text style={styles.blockText}>Status: {item.status}</Text>
                     <Text style={styles.blockText}>Offline case: {item.isOfflineCase ? 'Yes' : 'No'}</Text>
@@ -318,12 +365,43 @@ export default function HistoryScreen() {
                     </View>
                   </View>
 
-                  {item.followUpNotes ? (
-                    <View style={styles.gridBlock}>
+                  <View style={styles.gridBlock}>
+                    <View style={styles.followUpHeaderRow}>
                       <Text style={styles.blockTitle}>Follow-up notes</Text>
-                      <Text style={styles.blockText}>{item.followUpNotes}</Text>
+                      {editingNotesId !== item.id ? (
+                        <TouchableOpacity onPress={() => startEditingNotes(item)} style={styles.editNotesBtn}>
+                          <Ionicons name="create-outline" size={16} color="#2E7D32" />
+                          <Text style={styles.editNotesBtnText}>Edit</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
-                  ) : null}
+
+                    {editingNotesId === item.id ? (
+                      <View>
+                        <TextInput
+                          value={draftNotes}
+                          onChangeText={setDraftNotes}
+                          placeholder="Add follow-up notes..."
+                          multiline
+                          style={styles.followUpInput}
+                          textAlignVertical="top"
+                        />
+                        <View style={styles.followUpActionsRow}>
+                          <TouchableOpacity onPress={cancelEditingNotes} style={styles.followUpActionSecondary}>
+                            <Text style={styles.followUpActionSecondaryText}>Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => saveNotes(item.id)} style={styles.followUpActionPrimary}>
+                            <Text style={styles.followUpActionPrimaryText}>Save</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : item.followUpNotes ? (
+                      <Text style={styles.blockText}>{item.followUpNotes}</Text>
+                    ) : (
+                      <Text style={styles.blockText}>— Add your follow-up after treatment.</Text>
+                    )}
+                  </View>
+
 
                   <TouchableOpacity style={styles.archiveButton} onPress={() => handleArchiveCase(item.id)}>
                     <Ionicons name="archive-outline" size={16} color="#B91C1C" />
@@ -502,6 +580,27 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   archiveChipText: { fontSize: 12, color: '#424242', fontWeight: '700' },
+
+  followUpHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  editNotesBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  editNotesBtnText: { fontSize: 12, fontWeight: '800', color: '#2E7D32' },
+  followUpInput: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    fontSize: 13,
+    color: '#212121',
+    minHeight: 90,
+  },
+  followUpActionsRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 10 },
+  followUpActionPrimary: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: '#2E7D32' },
+  followUpActionPrimaryText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
+  followUpActionSecondary: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: '#F3F4F6' },
+  followUpActionSecondaryText: { color: '#374151', fontWeight: '800', fontSize: 13 },
 });
+
 
 

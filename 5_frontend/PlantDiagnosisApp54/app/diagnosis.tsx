@@ -131,6 +131,8 @@ export default function DiagnosisScreen() {
                 cropType: params.crop as any,
                 imageUri: params.imageUri,
                 diagnosis: res.diagnosis,
+                // IMPORTANT: Persist the treatment so History can show it.
+                treatment: res?.treatment ?? undefined,
                 symptomsDescription: undefined,
                 latitude: undefined,
                 longitude: undefined,
