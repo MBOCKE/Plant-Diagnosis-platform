@@ -17,7 +17,7 @@ app = Flask(__name__)
 # LOAD MODELS AT STARTUP
 # ============================================
 
-MODEL_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
+MODEL_DIR = os.path.dirname(__file__)
 
 print("🔄 Loading models...")
 
@@ -38,9 +38,9 @@ banana_input = banana_interpreter.get_input_details()[0]
 banana_output = banana_interpreter.get_output_details()[0]
 
 # Load labels
-with open(os.path.join(MODEL_DIR, 'labels', 'tomato_labels.json')) as f:
+with open(os.path.join(MODEL_DIR, 'tomato_labels.json')) as f:
     TOMATO_LABELS = json.load(f)
-with open(os.path.join(MODEL_DIR, 'labels', 'banana_labels.json')) as f:
+with open(os.path.join(MODEL_DIR, 'banana_labels.json')) as f:
     BANANA_LABELS = json.load(f)
 
 print("✅ Models loaded!")
@@ -105,9 +105,22 @@ def run_inference(image_bytes, crop_type):
     }
 
 
+
 # ============================================
 # ROUTES
 # ============================================
+
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({
+        'service': 'Plant Diagnosis Inference API',
+        'version': '1.0.0',
+        'endpoints': {
+            'health': 'GET /health',
+            'predict': 'POST /predict'
+        },
+        'usage': 'POST /predict with multipart/form-data: image (file) + crop_type (tomato or banana_plantain)'
+    })
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -137,6 +150,21 @@ def predict():
         image_bytes = request.files['image'].read()
         result = run_inference(image_bytes, crop_type)
         
+         # Check if top prediction confidence is too low
+        if result['primaryDiagnosis']['confidence'] < 50:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'primaryDiagnosis': {
+                        'disease': 'Unknown/Not a plant leaf',
+                        'confidence': result['primaryDiagnosis']['confidence']
+                    },
+                    'alternativeDiagnoses': result['alternativeDiagnoses'],
+                    'modelUsed': result['modelUsed'],
+                    'warning': 'Low confidence. This image may not be a tomato or banana leaf.'
+                }
+            })
+            
         return jsonify({
             'success': True,
             'data': result,
@@ -150,5 +178,5 @@ def predict():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 7860))
     app.run(host='0.0.0.0', port=port, debug=True)

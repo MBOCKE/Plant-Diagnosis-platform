@@ -1,7 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated } from 'react-native';
+import { View, Animated, StyleSheet, ViewStyle } from 'react-native';
 
-function Block({ width = '100%', height = 16, className = '' }: { width?: number | string; height?: number; className?: string }) {
+type BlockProps = {
+  width?: number | string;
+  height?: number;
+  style?: ViewStyle;
+};
+
+function Block({ width = '100%', height = 16, style }: BlockProps) {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -15,16 +21,25 @@ function Block({ width = '100%', height = 16, className = '' }: { width?: number
     return () => animation.stop();
   }, []);
 
-  return <Animated.View style={{ width: width as any, height, opacity }} className={`bg-gray-200 rounded-lg ${className}`} />;
+  return (
+    <Animated.View
+      style={[styles.block, { width: width as any, height }, style, { opacity }]}
+    />
+  );
+
 }
 
 export function PageSkeleton() {
   return (
-    <View className="flex-1 bg-[#F5F5F5]">
-      <View className="bg-white px-6 py-4"><Block width={120} height={20} /></View>
-      <View className="flex-1 px-6 pt-6 gap-4">
-        <Block height={120} className="rounded-2xl" />
-        <Block height={60} /><Block height={60} /><Block height={60} />
+    <View style={styles.pageRoot}>
+      <View style={styles.headerBox}>
+        <Block width={120} height={20} />
+      </View>
+      <View style={styles.pageBody}>
+        <Block height={120} style={styles.radius2xl} />
+        <Block height={60} />
+        <Block height={60} />
+        <Block height={60} />
       </View>
     </View>
   );
@@ -32,53 +47,84 @@ export function PageSkeleton() {
 
 export function DashboardSkeleton() {
   return (
-    <View className="flex-1 bg-[#F5F5F5] px-6 pt-6 gap-4">
-      <View className="flex-row justify-between">
-        <View><Block width={80} height={14} /><Block width={120} height={24} className="mt-2" /></View>
-        <Block width={44} height={44} className="rounded-full" />
+    <View style={styles.dashboardRoot}>
+      <View style={styles.rowBetween}>
+        <View>
+          <Block width={80} height={14} />
+          <View style={{ height: 8 }} />
+          <Block width={120} height={24} />
+        </View>
+        <Block width={44} height={44} style={styles.radiusFull} />
       </View>
-      <Block height={100} className="rounded-2xl" />
+      <Block height={100} style={styles.radius2xl} />
       <Block width={100} height={18} />
-      <View className="flex-row gap-3"><Block height={80} className="flex-1 rounded-2xl" /><Block height={80} className="flex-1 rounded-2xl" /></View>
+      <View style={styles.rowGap3}>
+        <View style={styles.flex1}>
+          <Block height={80} style={styles.radius2xl} />
+        </View>
+        <View style={styles.flex1}>
+          <Block height={80} style={styles.radius2xl} />
+        </View>
+      </View>
       <Block width={140} height={18} />
-      {[1, 2, 3].map(i => <Block key={i} height={72} className="rounded-xl" />)}
+      <Block height={72} style={styles.radiusXl} />
+      <View style={{ height: 8 }} />
+      <Block height={72} style={styles.radiusXl} />
+      <View style={{ height: 8 }} />
+      <Block height={72} style={styles.radiusXl} />
     </View>
   );
 }
 
 export function DiagnosisSkeleton() {
   return (
-    <View className="flex-1 bg-[#F5F5F5] px-6 pt-6 gap-4">
-      <Block height={220} className="rounded-xl" />
-      <Block height={160} className="rounded-2xl" />
-      <Block height={100} className="rounded-2xl" />
-      <Block height={48} className="rounded-xl" />
+    <View style={styles.dashboardRoot}>
+      <Block height={220} style={styles.radiusXl} />
+      <Block height={160} style={styles.radius2xl} />
+      <Block height={100} style={styles.radius2xl} />
+      <Block height={48} style={styles.radiusXl} />
     </View>
   );
 }
 
 export function TreatmentSkeleton() {
   return (
-    <View className="flex-1 bg-[#F5F5F5] px-6 pt-6 gap-4">
-      <View className="flex-row justify-between">
-        <View><Block width={180} height={24} /><Block width={140} height={14} className="mt-2" /></View>
-        <Block width={100} height={28} className="rounded-full" />
+    <View style={styles.dashboardRoot}>
+      <View style={styles.rowBetween}>
+        <View>
+          <Block width={180} height={24} />
+          <View style={{ height: 8 }} />
+          <Block width={140} height={14} />
+        </View>
+        <Block width={100} height={28} style={styles.radiusFull} />
       </View>
-      {[1, 2, 3, 4].map(i => <Block key={i} height={72} className="rounded-xl" />)}
+      <Block height={72} style={styles.radiusXl} />
+      <View style={{ height: 8 }} />
+      <Block height={72} style={styles.radiusXl} />
+      <View style={{ height: 8 }} />
+      <Block height={72} style={styles.radiusXl} />
+      <View style={{ height: 8 }} />
+      <Block height={72} style={styles.radiusXl} />
     </View>
   );
 }
 
 export function ListSkeleton() {
   return (
-    <View className="flex-1 bg-[#F5F5F5] px-6 pt-6 gap-3">
+    <View style={styles.listRoot}>
       <Block width={100} height={24} />
-      <View className="flex-row gap-6"><Block width={80} height={20} /><Block width={80} height={20} /></View>
-      {[1, 2, 3, 4, 5].map(i => (
-        <View key={i} className="flex-row items-center gap-3 bg-white p-4 rounded-xl">
-          <Block width={56} height={56} className="rounded-lg" />
-          <View className="flex-1 gap-2"><Block width="60%" height={16} /><Block width="40%" height={12} /></View>
-          <Block width={80} height={24} className="rounded-full" />
+      <View style={styles.rowGap6}>
+        <Block width={80} height={20} />
+        <Block width={80} height={20} />
+      </View>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <View key={i} style={styles.cardRow}>
+          <Block width={56} height={56} style={styles.radiusLg} />
+          <View style={{ flex: 1, gap: 8 } as any}>
+            <Block width={'60%'} height={16} />
+            <Block width={'40%'} height={12} />
+          </View>
+          <Block width={80} height={24} style={styles.radiusFull} />
         </View>
       ))}
     </View>
@@ -87,9 +133,18 @@ export function ListSkeleton() {
 
 export function CameraSkeleton() {
   return (
-    <View className="flex-1 bg-black items-center justify-center gap-4">
-      <Block width={280} height={280} className="rounded-2xl border-2 border-white/30 bg-transparent" />
-      <Block width={200} height={16} className="bg-white/20" />
+    <View style={styles.cameraRoot}>
+      <Block
+        width={280}
+        height={280}
+        style={{
+          borderRadius: 20,
+          borderWidth: 2,
+          borderColor: 'rgba(255,255,255,0.3)',
+          backgroundColor: 'transparent',
+        }}
+      />
+      <Block width={200} height={16} style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
     </View>
   );
 }
@@ -100,7 +155,7 @@ interface LoadingScreenProps {
 }
 
 export function LoadingScreen({ variant = 'page' }: LoadingScreenProps) {
-  const variants = {
+  const variants: Record<NonNullable<LoadingScreenProps['variant']>, React.ComponentType> = {
     page: PageSkeleton,
     dashboard: DashboardSkeleton,
     diagnosis: DiagnosisSkeleton,
@@ -108,6 +163,42 @@ export function LoadingScreen({ variant = 'page' }: LoadingScreenProps) {
     list: ListSkeleton,
     camera: CameraSkeleton,
   };
+
   const Component = variants[variant];
   return <Component />;
 }
+
+const styles = StyleSheet.create({
+  block: {
+    backgroundColor: '#e5e7eb', // gray-200
+    borderRadius: 12, // rounded-lg
+  },
+  radiusLg: { borderRadius: 10 },
+  radiusXl: { borderRadius: 16 },
+  radius2xl: { borderRadius: 20 },
+  radiusFull: { borderRadius: 9999 },
+
+  flex1: { flex: 1 },
+
+  pageRoot: { flex: 1, backgroundColor: '#F5F5F5' },
+  headerBox: { backgroundColor: '#FFFFFF', paddingHorizontal: 24, paddingVertical: 16 },
+  pageBody: { flex: 1, paddingHorizontal: 24, paddingTop: 24, gap: 16 } as any,
+
+  dashboardRoot: { flex: 1, backgroundColor: '#F5F5F5', paddingHorizontal: 24, paddingTop: 24, gap: 16 } as any,
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  rowGap3: { flexDirection: 'row', gap: 12 } as any,
+
+  listRoot: { flex: 1, backgroundColor: '#F5F5F5', paddingHorizontal: 24, paddingTop: 24, gap: 12 } as any,
+  rowGap6: { flexDirection: 'row', gap: 24 } as any,
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+  } as any,
+
+  cameraRoot: { flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center', gap: 16 } as any,
+});
+

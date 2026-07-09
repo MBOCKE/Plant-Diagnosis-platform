@@ -159,7 +159,10 @@ export default function DiagnosisScreen() {
     run();
   }, [params.imageUri, params.crop, isConnected, router]);
 
-  if (loading) return <DiagnosisSkeleton />;
+    if (loading) {
+    console.log('🔄 Showing loading skeleton...');
+    return <DiagnosisSkeleton />;
+  }
 
   if (!result) {
     return (
