@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from 'react-native';
+
 
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -132,8 +134,12 @@ export default function RegisterScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View style={styles.logoCircle}>
-              <Ionicons name="leaf" size={40} color={Colors.surface} />
+              <Image
+                source={require('../../assets/icon.png')}
+                style={{ width: 70, height: 70, resizeMode: 'contain' }}
+              />
             </View>
+
             <Text style={styles.title}>Plant Diagnosis</Text>
             <Text style={styles.subtitle}>Join to start diagnosing your crops.</Text>
           </View>
@@ -268,8 +274,8 @@ const styles = StyleSheet.create({
   logoCircle: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primary,
+    borderRadius: 15,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
