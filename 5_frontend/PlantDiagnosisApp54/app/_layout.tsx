@@ -14,6 +14,28 @@ export default function RootLayout() {
     checkAuth();
   }, []);
 
+  // Warm up services on app launch (don't block UI)
+  useEffect(() => {
+    const warmUp = async () => {
+      try {
+        const services = [
+          'https://plant-diagnosis-platform.onrender.com/health',
+          'https://plant-auth-service.onrender.com/health',
+          'https://plant-treatment-service.onrender.com/health',
+          'https://plant-case-service.onrender.com/health',
+          'https://mcGabe-plant-inference.hf.space/health',
+        ];
+        await Promise.all(services.map(url => 
+          fetch(url).catch(() => console.log(`⚠️ Could not reach ${url}`))
+        ));
+        console.log('✅ Services warm-up complete');
+      } catch (e) {
+        console.log('Warm-up skipped (offline)');
+      }
+    };
+    warmUp();
+  }, []);
+
   useEffect(() => {
     if (isLoading) return;
     const inAuthGroup = segments[0] === '(auth)';

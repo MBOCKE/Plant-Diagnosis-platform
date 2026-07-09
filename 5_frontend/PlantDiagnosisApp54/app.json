@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MB Diagnosis",
+    "name": "Plant Diagnosis",
     "slug": "plant-diagnosis",
     "scheme": "mbdiagnosis",
     "version": "1.0.0",
@@ -13,14 +13,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mbocke.mbdiagnosis"
+      "bundleIdentifier": "com.mbocke.plantdiagnosis"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2E7D32"
       },
-      "package": "com.mbocke.mbdiagnosis"
+      "package": "com.mbocke.plantdiagnosis"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -28,11 +28,51 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Request interceptor - attach JWT token
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('auth_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+// Service URLs for warm-up
+const SERVICES = {
+  gateway: 'https://plant-diagnosis-platform.onrender.com',
+  auth: 'https://plant-auth-service.onrender.com',
+  treatment: 'https://plant-treatment-service.onrender.com',
+  case: 'https://plant-case-service.onrender.com',
+  inference: 'https://mcGabe-plant-inference.hf.space',
+};
+
+// Wake up ALL services in parallel
+async function wakeAllServices() {
+  console.log('🔄 Waking up all services...');
+  const wakeCalls = Object.values(SERVICES).map(url =>
+    fetch(`${url}/health`).catch(() => {})
+  );
+  await Promise.all(wakeCalls);
+  console.log('✅ All services pinged');
+}
+
+// Response interceptor - retry on sleeping services
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // Prevent infinite retry loops
+    if (!error.config) return Promise.reject(error);
+    error.config.__retryCount = error.config.__retryCount || 0;
+
+    if ((error.response?.status === 502 || error.code === 'ECONNABORTED' || error.code === 'ECONNRESET' || error.code === 'ERR_NETWORK') && error.config.__retryCount < 2) {
+      error.config.__retryCount += 1;
+      console.log(`⏰ Service sleeping (attempt ${error.config.__retryCount}), waking all services...`);
+      await wakeAllServices();
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      console.log('🔄 Retrying request...');
+      return api.request(error.config);
+    }
+    return Promise.reject(error);
+  }
+);
 
 function unwrapApiData<T>(payload: any): T {
   return payload?.data ?? payload;
