@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Image, Alert } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Image, Alert } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../src/components/Card';
@@ -62,7 +63,12 @@ export default function HistoryScreen() {
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const [archivedCaseIds, setArchivedCaseIds] = useState<string[]>([]);
 
+  // Controls fading of the collapsed/expanded preview header (disease/date/urgency).
+  const fadeAnimRef = useRef(new Animated.Value(1));
+  const [previewVisibleMap, setPreviewVisibleMap] = useState<Record<string, boolean>>({});
+
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+
   const [draftNotes, setDraftNotes] = useState<string>('');
 
   const [cases, setCases] = useState<Case[]>([]);
@@ -202,7 +208,7 @@ export default function HistoryScreen() {
               <Text style={styles.emptyStateIcon}>⏳</Text>
             </View>
             <Text style={styles.emptyStateTitle}>Loading cases…</Text>
-            <Text style={styles.emptyStateText}>Fetching your latest diagnoses from the gateway.</Text>
+            <Text style={styles.emptyStateText}>Fetching your latest diagnoses.</Text>
           </View>
         ) : null}
 
@@ -250,39 +256,96 @@ export default function HistoryScreen() {
             <Card key={item.id} style={sectionStyles.card}>
               <TouchableOpacity
                 activeOpacity={0.9}
-                onPress={() =>
-                  setExpandedIds(prev => (prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]))
-                }
+                onPress={() => {
+                  const willExpand = !expandedIds.includes(item.id);
+
+                  if (willExpand) {
+                    // Fade preview out, then hide it.
+                    setPreviewVisibleMap(prev => ({ ...prev, [item.id]: true }));
+                    fadeAnimRef.current.setValue(1);
+
+                    Animated.timing(fadeAnimRef.current, {
+                      toValue: 0,
+                      duration: 180,
+                      useNativeDriver: true,
+                    }).start(() => {
+                      setPreviewVisibleMap(prev => ({ ...prev, [item.id]: false }));
+                    });
+                  } else {
+                    // Show preview, then fade back in.
+                    setPreviewVisibleMap(prev => ({ ...prev, [item.id]: true }));
+                    fadeAnimRef.current.setValue(0);
+                    Animated.timing(fadeAnimRef.current, {
+                      toValue: 1,
+                      duration: 180,
+                      useNativeDriver: true,
+                    }).start();
+                  }
+
+
+                  setExpandedIds(prev => (prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]));
+                }}
               >
-                  <View style={styles.caseTopRow}>
-                <View style={styles.caseImageWrap}>
+                {(previewVisibleMap[item.id] ?? true) ? (
+                  <Animated.View style={[styles.caseTopRow, { opacity: fadeAnimRef.current }]}>
+                    {/* Left image (fixed 56x56 like Home) */}
+                    <View style={styles.caseImageWrap}>
                     {item.imageUri ? (
-                      <Image source={{ uri: item.imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                      <Image
+                        source={{ uri: item.imageUri }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                      />
+
                     ) : (
                       <Text style={styles.imageMockText}>{cropEmoji(item.cropType)}</Text>
                     )}
                   </View>
 
-
-
-
+                  {/* Disease + date go under the badge (same as Home) */}
                   <View style={{ flex: 1 }}>
-                    {/* Readability: disease name on one line, date on another */}
-                    <Text style={styles.caseDisease} numberOfLines={1}>
-                      {summarizeDisease(primary?.disease)}
-                    </Text>
-                    <Text style={styles.caseMeta}>{formatDate(item.createdAt)}</Text>
+                    <View style={styles.caseInfoColumn}>
+                      <Badge urgency={urgency as any} label={urgencyLabel} />
+                      <Text style={styles.caseDiseaseNoWrap}>
+                        {summarizeDisease(primary?.disease)}
+                      </Text>
+                      <Text style={styles.caseMeta} numberOfLines={1}>
+                        {formatDate(item.createdAt)}
+                      </Text>
+                    </View>
                   </View>
 
-
-                  <Badge urgency={urgency as any} label={urgencyLabel} />
-
                   <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#757575" />
-                </View>
+                </Animated.View>
+              ) : null}
+
               </TouchableOpacity>
+
 
               {isExpanded && (
                 <View style={styles.detailsWrap}>
+                  {/* Expanded header: full-width image on top, then date + urgency */}
+                  <View style={styles.expandedHero}>
+                    <View style={styles.expandedImageWrap}>
+                      {item.imageUri ? (
+                        <Image
+                          source={{ uri: item.imageUri }}
+                          style={styles.expandedImage}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Text style={styles.imageMockText}>{cropEmoji(item.cropType)}</Text>
+                      )}
+                    </View>
+
+                    <View style={styles.expandedSubRow}>
+                      <Text style={styles.caseMeta} numberOfLines={1}>
+                        {formatDate(item.createdAt)}
+                      </Text>
+                      <Badge urgency={urgency as any} label={urgencyLabel} />
+                    </View>
+                  </View>
+
                   <Text style={styles.detailsHeader}>Every detail</Text>
 
                   <View style={styles.gridBlock}>
@@ -436,8 +499,8 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F5F5' },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingHorizontal: 14,
+    paddingTop: 14,
     paddingBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -480,8 +543,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   caseImageWrap: {
-    width: 56,
-    height: 56,
+    width: 70,
+    height: 70,
     backgroundColor: '#F5F5F5',
     borderRadius: 14,
     alignItems: 'center',
@@ -495,10 +558,32 @@ const styles = StyleSheet.create({
 
 
   caseDisease: { fontSize: 15, fontWeight: '800', color: '#212121' },
-  caseMeta: { fontSize: 12, color: '#757575', marginTop: 2 },
+  caseDiseaseNoWrap: { fontSize: 15, fontWeight: '800', color: '#212121', flexShrink: 1 },
+  caseInfoColumn: { flex: 1, justifyContent: 'center', gap: 4 },
+  caseMeta: { fontSize: 12, color: '#757575', marginTop: 0 },
 
   detailsWrap: { paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
   detailsHeader: { marginTop: 14, marginBottom: 12, fontWeight: '800', color: '#212121', fontSize: 14 },
+
+  expandedHero: { marginBottom: 10 },
+  expandedImageWrap: {
+    width: '100%',
+    height: 220,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+  },
+  expandedImage: {
+    width: '100%',
+    height: '100%',
+  },
+  expandedSubRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
 
   gridBlock: {
     backgroundColor: '#FAFAFA',

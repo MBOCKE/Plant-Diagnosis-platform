@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Animated, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useAuthStore } from '../../src/store/authStore';
 import { Badge } from '../../src/components/Badge';
 import { Card } from '../../src/components/Card';
-import { StyleSheet } from 'react-native';
 import { Case, CropType } from '../../src/types';
 import { casesAPI } from '../../src/services/api';
 
@@ -14,8 +14,6 @@ const cropEmojiByType: Record<CropType, string> = {
   tomato: '🍅',
   banana_plantain: '🍌',
 };
-
-
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -34,13 +32,17 @@ export default function HomeScreen() {
     ).start();
 
     setLoading(true);
-    casesAPI.getUserCases({ page: 1, limit: 3 }).then(({ cases }) => {
-      if (active) setRecentCases(cases);
-    }).catch(() => {
-      if (active) setRecentCases([]);
-    }).finally(() => {
-      if (active) setLoading(false);
-    });
+    casesAPI
+      .getUserCases({ page: 1, limit: 3 })
+      .then(({ cases }) => {
+        if (active) setRecentCases(cases);
+      })
+      .catch(() => {
+        if (active) setRecentCases([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
     return () => {
       active = false;
@@ -77,20 +79,32 @@ export default function HomeScreen() {
 
         <View style={styles.cropRow}>
           <TouchableOpacity
-            style={styles.cropCard}
+            style={styles.cropColumn}
             onPress={() => router.push({ pathname: '/camera', params: { crop: 'tomato' as CropType } })}
           >
-            <Text style={styles.cropEmoji}>🍅</Text>
-            <Text style={styles.cropText}>Tomato</Text>
+            <View style={styles.cropCard}>
+              <Image
+                source={require('../../assets/tomato.png')}
+                style={styles.cropImage}
+                resizeMode="cover"
+              />
+            </View>
+            <Text style={styles.cropLabel}>Tomato</Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={styles.cropCard}
-            onPress={() => router.push({ pathname: '/camera', params: { crop: 'banana_plantain' as CropType } })}
+            style={styles.cropColumn}
+            onPress={() =>
+              router.push({ pathname: '/camera', params: { crop: 'banana_plantain' as CropType } })
+            }
           >
-            <Text style={styles.cropEmoji}>🍌</Text>
-            <Text style={styles.cropText}>Banana / Plantain</Text>
+            <View style={styles.cropCard}>
+              <Image source={require('../../assets/banana.png')} style={styles.cropImage} resizeMode="cover" />
+            </View>
+            <Text style={styles.cropLabel}>Banana / Plantain</Text>
           </TouchableOpacity>
         </View>
+
 
         <View style={styles.historyHeader}>
           <Text style={styles.historyTitle}>Recent Diagnoses</Text>
@@ -107,28 +121,52 @@ export default function HomeScreen() {
             <Text style={styles.emptyStateTitle}>Loading your recent diagnoses…</Text>
             <Text style={styles.emptyStateText}>The latest cases are being fetched from the gateway.</Text>
           </View>
-        ) : recentCases.length > 0 ? recentCases.map(item => (
-          <Card key={item.id} style={{ marginBottom: 12 }} onPress={() => {}}>
-            <View style={styles.caseRow}>
-              <View style={styles.caseImageWrap}>
-                <Text style={styles.imageMockText}>{cropEmojiByType[item.cropType] || '🖼️'}</Text>
+        ) : recentCases.length > 0 ? (
+          recentCases.map(item => (
+            <Card key={item.id} style={{ marginBottom: 12 }} onPress={() => {}}>
+              <View style={styles.caseRow}>
+                {/* Flush-left image with full card height */}
+                <View style={styles.caseImageWrap}>
+                  {item.imageUri ? (
+                    <Image
+                      source={{ uri: item.imageUri }}
+                      style={styles.caseImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.imageMockText}>{cropEmojiByType[item.cropType] || '🖼️'}</Text>
+                  )}
+                </View>
+
+                {/* Text sits under the badge */}
+                <View style={styles.caseMain}>
+                  <Badge
+                    urgency={(item.treatment?.urgency ?? 'monitor') as any}
+                    label={item.treatment?.urgencyLabel ?? 'Monitor'}
+                  />
+
+                  <Text style={styles.caseDisease}>
+                    {item.diagnosis?.primaryDiagnosis?.disease ?? 'Unknown'}
+                  </Text>
+                  <Text style={styles.caseDate} numberOfLines={1}>
+                    {new Date(item.createdAt).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: '2-digit',
+                    })}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.caseDisease} numberOfLines={1}>
-                  {item.diagnosis?.primaryDiagnosis?.disease ?? 'Unknown'}
-                </Text>
-                <Text style={styles.caseDate}>{new Date(item.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</Text>
-              </View>
-              <Badge urgency={(item.treatment?.urgency ?? 'monitor') as any} label={item.treatment?.urgencyLabel ?? 'Monitor'} />
-            </View>
-          </Card>
-        )) : (
+            </Card>
+          ))
+        ) : (
           <View style={styles.emptyStateBox}>
             <Text style={styles.emptyStateTitle}>No recent diagnoses yet</Text>
-            <Text style={styles.emptyStateText}>Your latest cases will appear here after you diagnose a plant.</Text>
+            <Text style={styles.emptyStateText}>
+              Your latest cases will appear here after you diagnose a plant.
+            </Text>
           </View>
         )}
-
 
         <View style={{ height: 80 }} />
       </ScrollView>
@@ -179,18 +217,37 @@ const styles = StyleSheet.create({
   primarySubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 14, marginTop: 2 },
   sectionTitle: { fontSize: 18, fontWeight: '600', color: '#212121', marginTop: 24, marginBottom: 12 },
   cropRow: { flexDirection: 'row', gap: 12 },
+  cropColumn: { flex: 1 },
   cropCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+
+    backgroundColor: '#F9F9F9',
     borderRadius: 16,
-    padding: 16,
+    padding: 0,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    overflow: 'hidden',
+    height: 140,
   },
-  cropEmoji: { fontSize: 38, marginBottom: 8 },
-  cropText: { fontSize: 15, fontWeight: '600', color: '#212121' },
+  cropImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+
+  cropLabel: {
+    marginTop: 8,
+    textAlign: 'center',
+    color: '#2E7D32',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+
   historyHeader: {
+
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -199,17 +256,32 @@ const styles = StyleSheet.create({
   },
   historyTitle: { fontSize: 18, fontWeight: '600', color: '#212121' },
   seeAll: { color: '#2E7D32', fontWeight: '700', fontSize: 14 },
-  caseRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+
+  caseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   caseImageWrap: {
-    width: 56,
-    height: 56,
+    width: 70,
+    height: 70,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F5F5F5',
     overflow: 'hidden',
   },
+  caseImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
   imageMockText: { fontSize: 18 },
+
+  caseMain: {
+    flex: 1,
+    justifyContent: 'center',
+  },
 
   caseDisease: { fontWeight: '700', color: '#212121' },
   caseDate: { fontSize: 12, color: '#757575', marginTop: 2 },
@@ -238,6 +310,5 @@ const styles = StyleSheet.create({
   },
   emptyStateTitle: { fontSize: 14, fontWeight: '700', color: '#212121', marginBottom: 4 },
   emptyStateText: { fontSize: 13, color: '#757575', textAlign: 'center', lineHeight: 18 },
-
 });
 
