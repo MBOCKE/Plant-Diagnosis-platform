@@ -150,9 +150,11 @@ def predict():
         image_bytes = request.files['image'].read()
         result = run_inference(image_bytes, crop_type)
         
-         # Check if top prediction confidence is too low
-        if result['primaryDiagnosis']['confidence'] < 50:
+        # Check if top prediction confidence is too low
+        # Threshold: flag if confidence is below 45%
+        if result['primaryDiagnosis']['confidence'] < 45:
             return jsonify({
+
                 'success': True,
                 'data': {
                     'primaryDiagnosis': {

@@ -1,11 +1,9 @@
-# TODO
+# TODO - Low confidence flow & history filtering
 
-## Plan: Refine “Recent Diagnoses” card (Home screen)
-- [ ] Update `5_frontend/PlantDiagnosisApp54/app/(tabs)/index.tsx` recent diagnosis row layout.
-  - [ ] Replace left emoji mock with `<Image>` using `item.imageUri` (fallback to emoji if missing).
-  - [ ] Make the image container flush to the extreme left of the row and match the full card height.
-  - [ ] Ensure image has rounded corners and is clipped correctly.
-  - [ ] Reorder text so sickness name is fully written under the urgency badge.
-  - [ ] Place date horizontally under the sickness name.
-- [ ] Verify compile/lint by running the frontend TypeScript/Expo build command (as available).
+- [ ] Update inference-service threshold from 50% to 45% (app.py)
+- [ ] When confidence is below threshold, stop creating a case in backend (PlantDiagnosisApp54/app/diagnosis.tsx)
+- [ ] Add a dedicated UI on low-confidence: two buttons (Green: Retake, White w/ green text: Exit -> home). Ensure no Treatment screen is shown.
+- [ ] Ensure low-confidence cases never appear in History/Recent: mark them as archived at creation time OR do not create them at all.
+- [ ] Confirm History screen filtering uses archived/isArchived; verify case creation gating is sufficient.
+- [ ] Run quick lint/type check (frontend) and minimal backend smoke checks.
 

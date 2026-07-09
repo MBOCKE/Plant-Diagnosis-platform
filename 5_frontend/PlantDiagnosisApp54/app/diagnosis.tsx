@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +17,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { enqueueOfflineCase, syncOfflineCases } from '../src/services/offlineSync';
 
 import { useI18n } from '../src/i18n/i18n';
+
+const LOW_CONFIDENCE_THRESHOLD = 45;
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F5F5' },
@@ -62,6 +64,38 @@ const styles = StyleSheet.create({
   },
   altDisease: { color: '#212121' },
   altConf: { color: '#757575' },
+
+  lowConfContainer: {
+    marginTop: 12,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  lowConfTitle: { fontSize: 18, fontWeight: '800', color: '#B91C1C', marginBottom: 8 },
+  lowConfText: { fontSize: 13, color: '#7F1D1D', lineHeight: 19, marginBottom: 14 },
+
+  lowConfButtons: { flexDirection: 'row', gap: 12 },
+  lowConfButtonPrimary: {
+    flex: 1,
+    backgroundColor: '#2E7D32',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  lowConfButtonPrimaryText: { color: '#FFFFFF', fontWeight: '900' },
+
+  lowConfButtonSecondary: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2E7D32',
+  },
+  lowConfButtonSecondaryText: { color: '#2E7D32', fontWeight: '900' },
 });
 
 export default function DiagnosisScreen() {
@@ -84,10 +118,10 @@ export default function DiagnosisScreen() {
   }, [isConnected]);
 
   useEffect(() => {
-      if (!(params.imageUri && params.crop)) {
-        setLoading(false);
-        return;
-      }
+    if (!(params.imageUri && params.crop)) {
+      setLoading(false);
+      return;
+    }
 
     const run = async () => {
       if (!isConnected) {
@@ -112,26 +146,22 @@ export default function DiagnosisScreen() {
           setResult(res.diagnosis);
           setTreatment(res.treatment);
 
-          // Create case in backend so it appears in History + Home recent section
-          // (Only when connected; offline is already queued in the else branch)
-          console.log('createCase gate:', {
-            isConnected,
-            disease: res?.diagnosis?.primaryDiagnosis?.disease,
-            primaryDiagnosis: res?.diagnosis?.primaryDiagnosis,
-            diagnosisPayload: res?.diagnosis,
-          });
-          if (isConnected && res?.diagnosis?.primaryDiagnosis?.disease) {
+          const primary = res?.diagnosis?.primaryDiagnosis;
+          const confidence = typeof primary?.confidence === 'number' ? primary.confidence : Number(primary?.confidence);
+
+          // Only create/persist cases when confidence is high enough.
+          // Low-confidence “not a plant” results should never appear in History.
+          if (
+            isConnected &&
+            res?.diagnosis?.primaryDiagnosis?.disease &&
+            !Number.isNaN(confidence) &&
+            confidence >= LOW_CONFIDENCE_THRESHOLD
+          ) {
             try {
-              // backend expects cropType, diagnosis, imageUri, symptomsDescription, status, etc.
-              // We pass what we have; Case schema will fill defaults where allowed.
-              // Create case using the gateway: POST /api/cases
-              // Note: the case-service route requires authentication (authMiddleware).
-              // Use the gateway via axios instance in casesAPI.
               await casesAPI.createCase({
                 cropType: params.crop as any,
                 imageUri: params.imageUri,
                 diagnosis: res.diagnosis,
-                // IMPORTANT: Persist the treatment so History can show it.
                 treatment: res?.treatment ?? undefined,
                 symptomsDescription: undefined,
                 latitude: undefined,
@@ -144,12 +174,10 @@ export default function DiagnosisScreen() {
                 status: e?.response?.status,
                 data: e?.response?.data,
               });
-              // Don't block the UI; user can create later from history.
             }
           }
         })
         .catch(err => {
-          // Make sure the screen doesn't blank due to an unhandled error
           Alert.alert('Diagnosis failed', 'Unable to run inference. Please try again.');
           console.error('Inference error:', err);
         })
@@ -157,10 +185,9 @@ export default function DiagnosisScreen() {
     };
 
     run();
-  }, [params.imageUri, params.crop, isConnected, router]);
+  }, [params.imageUri, params.crop, isConnected, router, t]);
 
-    if (loading) {
-    console.log('🔄 Showing loading skeleton...');
+  if (loading) {
     return <DiagnosisSkeleton />;
   }
 
@@ -178,6 +205,11 @@ export default function DiagnosisScreen() {
     );
   }
 
+  const primary = result.primaryDiagnosis;
+  const confidence = typeof primary?.confidence === 'number' ? primary.confidence : Number(primary?.confidence);
+  const isLowConfidence =
+    primary?.disease === 'Unknown/Not a plant leaf' || (!Number.isNaN(confidence) && confidence < LOW_CONFIDENCE_THRESHOLD);
+
   return (
     <SafeAreaView style={styles.safe}>
       <Header
@@ -186,65 +218,83 @@ export default function DiagnosisScreen() {
         rightIcon="close"
         onRightPress={() => router.replace('/')}
       />
+
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {params.imageUri && (
-          <Image source={{ uri: params.imageUri }} style={styles.image} resizeMode="cover" />
-        )}
+        {params.imageUri && <Image source={{ uri: params.imageUri }} style={styles.image} resizeMode="cover" />}
 
-        <Card style={styles.card}>
-          <Text style={styles.cropText}>{params.crop === 'tomato' ? t('history.filter.tomato') : t('history.filter.banana')}</Text>
+        {isLowConfidence ? (
+          <View style={styles.lowConfContainer}>
+            <Text style={styles.lowConfTitle}>Not confident enough</Text>
+            <Text style={styles.lowConfText}>Retake the photo so the model can detect the plant correctly.</Text>
+            <View style={styles.lowConfButtons}>
+              <TouchableOpacity
+                style={styles.lowConfButtonPrimary}
+                onPress={() => router.replace({ pathname: '/camera', params: { crop: params.crop } })}
+              >
+                <Text style={styles.lowConfButtonPrimaryText}>Retake</Text>
+              </TouchableOpacity>
 
-          <Text style={styles.diseaseTitle}>{result.primaryDiagnosis.disease}</Text>
-
-          {result.primaryDiagnosis.scientificName && (
-            <Text style={styles.scientific}>{result.primaryDiagnosis.scientificName}</Text>
-          )}
-
-          <View style={styles.confRow}>
-            <Text style={styles.confLabel}>{t('diagnosis.confidence')}</Text>
-            <Text style={styles.confValue}>{result.primaryDiagnosis.confidence}%</Text>
+              <TouchableOpacity style={styles.lowConfButtonSecondary} onPress={() => router.replace('/(tabs)')}>
+                <Text style={styles.lowConfButtonSecondaryText}>Exit</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : null}
 
-          <View style={styles.progressOuter}>
-            <View
-              style={[
-                styles.progressInner,
-                { width: `${result.primaryDiagnosis.confidence}%` },
-              ]}
-            />
-          </View>
+        {/* Only show treatment CTA when confidence is OK */}
+        {!isLowConfidence ? (
+          <>
+            <Card style={styles.card}>
+              <Text style={styles.cropText}>{params.crop === 'tomato' ? t('history.filter.tomato') : t('history.filter.banana')}</Text>
 
-          {treatment && <Badge urgency={treatment.urgency} label={treatment.urgencyLabel} />}
-        </Card>
+              <Text style={styles.diseaseTitle}>{result.primaryDiagnosis.disease}</Text>
 
-        {result.alternativeDiagnoses.length > 0 && (
-          <Card style={styles.altCard}>
-            <Text style={styles.altTitle}>{t('diagnosis.alternativeTitle')}</Text>
-            {result.alternativeDiagnoses.map((alt, i) => (
-              <View key={i} style={styles.altRow}>
-                <Text style={styles.altDisease}>{alt.disease}</Text>
-                <Text style={styles.altConf}>{alt.confidence}%</Text>
+              {result.primaryDiagnosis.scientificName && (
+                <Text style={styles.scientific}>{result.primaryDiagnosis.scientificName}</Text>
+              )}
+
+              <View style={styles.confRow}>
+                <Text style={styles.confLabel}>{t('diagnosis.confidence')}</Text>
+                <Text style={styles.confValue}>{result.primaryDiagnosis.confidence}%</Text>
               </View>
-            ))}
-          </Card>
-        )}
 
-        <View style={{ marginTop: 12, marginBottom: 24 }}>
-          <Button
-            title={t('diagnosis.viewTreatmentPlan')}
-            onPress={() =>
-              router.push({
-                pathname: '/treatment',
-                params: {
-                  crop: params.crop,
-                  disease: result.primaryDiagnosis.disease,
-                  treatment: JSON.stringify(treatment || {}),
-                },
-              })
-            }
-            icon="arrow-forward"
-          />
-        </View>
+              <View style={styles.progressOuter}>
+                <View style={[styles.progressInner, { width: `${result.primaryDiagnosis.confidence}%` }]} />
+              </View>
+
+              {treatment && <Badge urgency={treatment.urgency} label={treatment.urgencyLabel} />}
+            </Card>
+
+            {result.alternativeDiagnoses.length > 0 && (
+              <Card style={styles.altCard}>
+                <Text style={styles.altTitle}>{t('diagnosis.alternativeTitle')}</Text>
+                {result.alternativeDiagnoses.map((alt, i) => (
+                  <View key={i} style={styles.altRow}>
+                    <Text style={styles.altDisease}>{alt.disease}</Text>
+                    <Text style={styles.altConf}>{alt.confidence}%</Text>
+                  </View>
+                ))}
+              </Card>
+            )}
+
+            <View style={{ marginTop: 12, marginBottom: 24 }}>
+              <Button
+                title={t('diagnosis.viewTreatmentPlan')}
+                onPress={() =>
+                  router.push({
+                    pathname: '/treatment',
+                    params: {
+                      crop: params.crop,
+                      disease: result.primaryDiagnosis.disease,
+                      treatment: JSON.stringify(treatment || {}),
+                    },
+                  })
+                }
+                icon="arrow-forward"
+              />
+            </View>
+          </>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
