@@ -234,9 +234,16 @@ export default function DiagnosisScreen() {
                 <Text style={styles.lowConfButtonPrimaryText}>Retake</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.lowConfButtonSecondary} onPress={() => router.replace('/(tabs)')}>
+              <TouchableOpacity
+                style={styles.lowConfButtonSecondary}
+                onPress={() => {
+                  if (typeof (router as any).dismissAll === 'function') (router as any).dismissAll();
+                  router.replace('/(tabs)');
+                }}
+              >
                 <Text style={styles.lowConfButtonSecondaryText}>Exit</Text>
               </TouchableOpacity>
+
             </View>
           </View>
         ) : null}
